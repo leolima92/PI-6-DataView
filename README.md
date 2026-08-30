@@ -155,15 +155,6 @@ rode em datas diferentes — a série temporal se forma pela combinação
   Para um dump estático enorme, a via seria o dump mensal da Open Library.
 
 ---
-
-## Próximos passos
-
-- **Google Books** como enriquecimento por ISBN: entra como
-  `booktrends/extract/googlebooks.py` e a junção acontece no `transform/`,
-  sem mexer no restante do pipeline.
-
----
-
 ## Fonte de dados
 
 Dados da [Open Library](https://openlibrary.org/), um projeto do Internet
