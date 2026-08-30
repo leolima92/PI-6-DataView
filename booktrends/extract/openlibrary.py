@@ -1,3 +1,10 @@
+"""
+Coleta paginada na Search API da Open Library.
+
+buscar_pagina  -> uma requisição, com retry/backoff
+coletar_genero -> pagina um gênero inteiro
+"""
+
 import time
 
 import requests
@@ -15,7 +22,11 @@ from ..config import (
 
 
 def buscar_pagina(termo_subject, page):
+    """
+    Executa uma requisição na Search API da Open Library.
 
+    Possui retry/backoff para HTTP 429/500/502/503/504 e erros de conexão.
+    """
     params = {
         "q": f'subject:"{termo_subject}"',
         "fields": FIELDS,
@@ -34,7 +45,9 @@ def buscar_pagina(termo_subject, page):
             time.sleep(espera)
             continue
 
+        # ------------------------------------------------------------------
         # SUCESSO
+        # ------------------------------------------------------------------
         if response.status_code == 200:
             try:
                 return response.json()
@@ -43,8 +56,9 @@ def buscar_pagina(termo_subject, page):
                     "Open Library retornou resposta inválida em vez de JSON."
                 )
 
-  
+        # ------------------------------------------------------------------
         # RATE LIMIT / ERROS TEMPORÁRIOS
+        # ------------------------------------------------------------------
         if response.status_code in (429, 500, 502, 503, 504):
             retry_after = response.headers.get("Retry-After")
             if retry_after:
@@ -60,7 +74,9 @@ def buscar_pagina(termo_subject, page):
             time.sleep(espera)
             continue
 
+        # ------------------------------------------------------------------
         # OUTROS ERROS HTTP
+        # ------------------------------------------------------------------
         response.raise_for_status()
 
     raise RuntimeError(
