@@ -6,9 +6,7 @@ coletar_genero -> pagina um gênero inteiro
 """
 
 import time
-
 import requests
-
 from ..config import (
     URL,
     FIELDS,
@@ -19,7 +17,6 @@ from ..config import (
     MAX_RETRIES,
     SESSION,
 )
-
 
 def buscar_pagina(termo_subject, page):
     """
@@ -45,9 +42,7 @@ def buscar_pagina(termo_subject, page):
             time.sleep(espera)
             continue
 
-        # ------------------------------------------------------------------
         # SUCESSO
-        # ------------------------------------------------------------------
         if response.status_code == 200:
             try:
                 return response.json()
@@ -56,9 +51,7 @@ def buscar_pagina(termo_subject, page):
                     "Open Library retornou resposta inválida em vez de JSON."
                 )
 
-        # ------------------------------------------------------------------
-        # RATE LIMIT / ERROS TEMPORÁRIOS
-        # ------------------------------------------------------------------
+        # RATE LIMIT / ERROS TEMPORÁRIO
         if response.status_code in (429, 500, 502, 503, 504):
             retry_after = response.headers.get("Retry-After")
             if retry_after:
@@ -73,16 +66,11 @@ def buscar_pagina(termo_subject, page):
             print(f"      HTTP {response.status_code}; nova tentativa em {espera}s")
             time.sleep(espera)
             continue
-
-        # ------------------------------------------------------------------
         # OUTROS ERROS HTTP
-        # ------------------------------------------------------------------
         response.raise_for_status()
-
     raise RuntimeError(
         f"Falha após todas as tentativas (subject={termo_subject}, page={page})"
     )
-
 
 def coletar_genero(nome_genero, termo_subject):
     """Percorre as páginas de determinado gênero."""
