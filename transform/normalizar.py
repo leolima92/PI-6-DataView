@@ -1,5 +1,5 @@
 import pandas as pd
-from ..helpers import primeiro, escolher_isbn
+from helpers import primeiro, escolher_isbn
 
 def normalizar(doc, data_coleta):
     """

@@ -1,15 +1,12 @@
 from pathlib import Path
 import requests
-#PASTA DE SAÍDA
-BASE_DIR = Path("./book-trends")
+# PASTA DE SAÍDA
 
-
+BASE_DIR = Path("G:/Meu Drive/book-trends")
 
 # IDENTIFICAÇÃO (a Open Library exige um User-Agent com contato)
 CONTACT_EMAIL = "leonardolima2003@gmail.com"
 USER_AGENT = f"BookTrends/0.1 (projeto academico; contato: {CONTACT_EMAIL})"
-
-
 # GÊNEROS
 # nome canônico (vai para a coluna) -> termo usado no filtro subject:"..."
 GENEROS = {
@@ -23,6 +20,7 @@ GENEROS = {
 }
 
 
+
 # CONTROLE DA COLETA
 LIMIT_POR_PAGINA = 100
 # 20 páginas × 100 livros = até 2.000 resultados por gênero
@@ -31,6 +29,7 @@ MAX_PAGINAS = 20
 PAUSA_SEGUNDOS = 1.0
 TIMEOUT = 30
 MAX_RETRIES = 5
+
 
 
 # CAMPOS DA OPEN LIBRARY
@@ -54,6 +53,8 @@ FIELDS = ",".join(
         "cover_i",
     ]
 )
+
+
 
 # API / SESSÃO
 URL = "https://openlibrary.org/search.json"

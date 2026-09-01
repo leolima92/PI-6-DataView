@@ -7,7 +7,7 @@ coletar_genero -> pagina um gênero inteiro
 
 import time
 import requests
-from ..config import (
+from config import (
     URL,
     FIELDS,
     LIMIT_POR_PAGINA,
