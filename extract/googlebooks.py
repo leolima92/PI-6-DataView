@@ -6,9 +6,7 @@ campos_google   -> extrai do volumeInfo apenas as colunas gb_* do projeto
 """
 
 import time
-
 import requests
-
 from config import (
     GOOGLE_BOOKS_URL,
     GOOGLE_BOOKS_API_KEY,
