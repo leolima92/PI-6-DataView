@@ -54,8 +54,6 @@ FIELDS = ",".join(
     ]
 )
 
-
-
 # API / SESSÃO
 URL = "https://openlibrary.org/search.json"
 
@@ -67,3 +65,9 @@ SESSION.headers.update(
         "Accept": "application/json",
     }
 )
+
+# GOOGLE BOOKS (merge por ISBN)
+GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes"
+GOOGLE_BOOKS_API_KEY = ""     
+GB_MAX_LIVROS = 500           # nº de livros a consultar por rodada (protege a cota)
+GB_PAUSA_SEGUNDOS = 1.0      # pausa entre consultas ao Google Books
