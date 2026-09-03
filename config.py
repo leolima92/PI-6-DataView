@@ -1,14 +1,17 @@
 from pathlib import Path
-import requests
 import os
+import requests
 from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
+load_dotenv()
 # PASTA DE SAÍDA
-BASE_DIR = Path("G:/Meu Drive/book-trends")
+# Defina BOOK_TRENDS_DIR no .env para escolher onde os CSVs são salvos
+# (ex.: BOOK_TRENDS_DIR=G:/Meu Drive/book-trends). Sem isso, usa ./data
+# na raiz do projeto.
+BASE_DIR = Path(os.getenv("BOOK_TRENDS_DIR") or Path(__file__).parent / "data")
 
 # IDENTIFICAÇÃO (a Open Library exige um User-Agent com contato)
-CONTACT_EMAIL = os.getenv("CONTACT_EMAIL")
+CONTACT_EMAIL = "leonardolima2003@gmail.com"
 USER_AGENT = f"BookTrends/0.1 (projeto academico; contato: {CONTACT_EMAIL})"
 # GÊNEROS
 # nome canônico (vai para a coluna) -> termo usado no filtro subject:"..."
@@ -71,6 +74,6 @@ SESSION.headers.update(
 
 # GOOGLE BOOKS (merge por ISBN)
 GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes"
-GOOGLE_BOOKS_API_KEY = os.environ.get("GOOGLE_BOOKS_API_KEY", "")    
+GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY", "")
 GB_MAX_LIVROS = 500           # nº de livros a consultar por rodada (protege a cota)
-GB_PAUSA_SEGUNDOS = 1.0      # pausa entre consultas ao Google Books
+GB_PAUSA_SEGUNDOS = 1.0       # pausa entre consultas ao Google Books
