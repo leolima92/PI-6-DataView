@@ -1,16 +1,21 @@
-"""""
+"""
 Gravação dos resultados em CSV.
 salvar_csv       -> sobrescreve um CSV (snapshot / foto atual)
 salvar_historico -> acrescenta ao histórico sem duplicar o mesmo dia
 """
 
+import logging
+
 import pandas as pd
+
+logger = logging.getLogger(__name__)
+
 
 def salvar_csv(df, caminho):
     """Sobrescreve um CSV."""
     caminho.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(caminho, index=False, encoding="utf-8-sig")
-    print(f"  -> {caminho} ({len(df)} linhas)")
+    logger.info("-> %s (%d linhas)", caminho, len(df))
 
 
 def salvar_historico(df, caminho):
@@ -32,4 +37,4 @@ def salvar_historico(df, caminho):
     )
 
     combinado.to_csv(caminho, index=False, encoding="utf-8-sig")
-    print(f"  -> {caminho} ({len(combinado)} linhas no histórico)")
+    logger.info("-> %s (%d linhas no histórico)", caminho, len(combinado))

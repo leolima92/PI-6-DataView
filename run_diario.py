@@ -6,30 +6,41 @@ README para registrar no Agendador de Tarefas do Windows.
 
 Uso manual:
     python run_diario.py
+
+O log de cada execução é gravado em
+<BASE_DIR>/logs/coleta_AAAA-MM-DD.log (ver logging_setup.py).
 """
 
 import datetime as dt
+import logging
 import sys
-import traceback
 
+from logging_setup import configurar_logging
 from pipeline import main as coletar
 from merge import main as merge_google_books
 
+logger = logging.getLogger(__name__)
+
 
 def main() -> int:
+    arquivo_log = configurar_logging()
     inicio = dt.datetime.now()
-    print(f"=== Coleta diária iniciada em {inicio:%Y-%m-%d %H:%M:%S} ===")
+    logger.info("=== Coleta diária iniciada em %s ===", f"{inicio:%Y-%m-%d %H:%M:%S}")
+    logger.info("Log desta execução: %s", arquivo_log)
 
     try:
         coletar()
         merge_google_books()
     except Exception:
-        print("ERRO na coleta diária:", file=sys.stderr)
-        traceback.print_exc()
+        logger.exception("ERRO na coleta diária")
         return 1
 
     fim = dt.datetime.now()
-    print(f"=== Concluída em {fim:%Y-%m-%d %H:%M:%S} (duração {fim - inicio}) ===")
+    logger.info(
+        "=== Concluída em %s (duração %s) ===",
+        f"{fim:%Y-%m-%d %H:%M:%S}",
+        fim - inicio,
+    )
     return 0
 
 

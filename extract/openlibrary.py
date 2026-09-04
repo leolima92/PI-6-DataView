@@ -5,6 +5,7 @@ buscar_pagina  -> uma requisição, com retry/backoff
 coletar_genero -> pagina um gênero inteiro
 """
 
+import logging
 import time
 import requests
 from config import (
@@ -17,6 +18,9 @@ from config import (
     MAX_RETRIES,
     SESSION,
 )
+
+logger = logging.getLogger(__name__)
+
 
 def buscar_pagina(termo_subject, page):
     """
@@ -38,7 +42,7 @@ def buscar_pagina(termo_subject, page):
             response = SESSION.get(URL, params=params, timeout=TIMEOUT)
         except requests.RequestException as erro:
             espera = min(60, 2 ** tentativa)
-            print(f"      erro de rede: {erro}; nova tentativa em {espera}s")
+            logger.warning("erro de rede: %s; nova tentativa em %ss", erro, espera)
             time.sleep(espera)
             continue
 
@@ -63,7 +67,9 @@ def buscar_pagina(termo_subject, page):
                 espera = 2 ** tentativa
 
             espera = min(60, espera)
-            print(f"      HTTP {response.status_code}; nova tentativa em {espera}s")
+            logger.warning(
+                "HTTP %s; nova tentativa em %ss", response.status_code, espera
+            )
             time.sleep(espera)
             continue
         # OUTROS ERROS HTTP
@@ -81,7 +87,7 @@ def coletar_genero(nome_genero, termo_subject):
         lote = dados.get("docs", [])
 
         if not lote:
-            print(f"    {nome_genero}: não existem mais resultados.")
+            logger.info("%s: não existem mais resultados.", nome_genero)
             break
 
         # guarda o gênero da consulta em cada doc
@@ -93,10 +99,13 @@ def coletar_genero(nome_genero, termo_subject):
         # Search API usa num_found; numFound fica como fallback
         total = dados.get("num_found", dados.get("numFound", 0))
 
-        print(
-            f"    {nome_genero}: página {page} "
-            f"(+{len(lote)} registros | acumulado {len(docs)} | "
-            f"disponíveis {total})"
+        logger.info(
+            "%s: página %s (+%d registros | acumulado %d | disponíveis %s)",
+            nome_genero,
+            page,
+            len(lote),
+            len(docs),
+            total,
         )
 
         # acabaram os resultados

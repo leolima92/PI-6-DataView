@@ -5,6 +5,7 @@ buscar_por_isbn -> volumeInfo do 1º volume que casa com o ISBN, ou None
 campos_google   -> extrai do volumeInfo apenas as colunas gb_* do projeto
 """
 
+import logging
 import time
 import requests
 from config import (
@@ -13,6 +14,8 @@ from config import (
     TIMEOUT,
     MAX_RETRIES,
 )
+
+logger = logging.getLogger(__name__)
 
 # Sessão própria — a SESSION do config carrega headers da Open Library.
 SESSION_GB = requests.Session()
@@ -33,7 +36,9 @@ def buscar_por_isbn(isbn):
             resp = SESSION_GB.get(GOOGLE_BOOKS_URL, params=params, timeout=TIMEOUT)
         except requests.RequestException as erro:
             espera = min(60, 2 ** tentativa)
-            print(f"      erro de rede (GB): {erro}; nova tentativa em {espera}s")
+            logger.warning(
+                "erro de rede (GB): %s; nova tentativa em %ss", erro, espera
+            )
             time.sleep(espera)
             continue
 
@@ -49,14 +54,16 @@ def buscar_por_isbn(isbn):
 
         if resp.status_code in (429, 500, 502, 503, 504):
             espera = min(60, 2 ** tentativa)
-            print(f"      HTTP {resp.status_code} (GB); nova tentativa em {espera}s")
+            logger.warning(
+                "HTTP %s (GB); nova tentativa em %ss", resp.status_code, espera
+            )
             time.sleep(espera)
             continue
 
         # 403 no Google Books normalmente é estouro de cota / limite.
         if resp.status_code == 403:
-            print(
-                "      HTTP 403 (GB) — provável limite de cota. "
+            logger.error(
+                "HTTP 403 (GB) — provável limite de cota. "
                 "Use uma API key ou reduza GB_MAX_LIVROS."
             )
             return None

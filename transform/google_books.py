@@ -9,10 +9,13 @@ temporal — por isso ficam na tabela de livros, não no histórico.
 """
 
 import json
+import logging
 import time
 import pandas as pd
 from config import BASE_DIR, GB_MAX_LIVROS, GB_PAUSA_SEGUNDOS
 from extract.googlebooks import buscar_por_isbn, campos_google
+
+logger = logging.getLogger(__name__)
 
 CACHE_PATH = BASE_DIR / "cache" / "googlebooks.json"
 
@@ -43,9 +46,12 @@ def merge(df_livros):
         )
     alvos = com_isbn.head(GB_MAX_LIVROS)
 
-    print(
-        f"Consultando o Google Books para {len(alvos)} livros "
-        f"(de {len(df_livros)} no total; limite GB_MAX_LIVROS={GB_MAX_LIVROS})"
+    logger.info(
+        "Consultando o Google Books para %d livros "
+        "(de %d no total; limite GB_MAX_LIVROS=%d)",
+        len(alvos),
+        len(df_livros),
+        GB_MAX_LIVROS,
     )
 
     por_livro = {}
@@ -63,13 +69,16 @@ def merge(df_livros):
             time.sleep(GB_PAUSA_SEGUNDOS)
             if consultas_novas % 50 == 0:
                 _salvar_cache(cache)  # salva progresso periodicamente
-                print(f"    ... {consultas_novas} consultas novas")
+                logger.info("... %d consultas novas", consultas_novas)
 
         por_livro[linha["id_livro"]] = campos
 
     _salvar_cache(cache)
-    print(f"Concluído: {consultas_novas} consultas novas, "
-          f"{len(alvos) - consultas_novas} vindas do cache.")
+    logger.info(
+        "Concluído: %d consultas novas, %d vindas do cache.",
+        consultas_novas,
+        len(alvos) - consultas_novas,
+    )
 
     df_gb = pd.DataFrame.from_dict(por_livro, orient="index")
     df_gb.index.name = "id_livro"

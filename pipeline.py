@@ -1,3 +1,4 @@
+import logging
 import time
 import datetime as dt
 import pandas as pd
@@ -7,25 +8,28 @@ from extract.openlibrary import coletar_genero
 from transform.normalizar import preparar_dados
 from load.csv_writer import salvar_csv, salvar_historico
 
+logger = logging.getLogger(__name__)
+
+
 def main():
     hoje = dt.date.today()
     data_coleta = hoje.isoformat()
     mes = hoje.strftime("%Y-%m")
 
-    print("BOOK TRENDS — OPEN LIBRARY")
-    print(f"Data da coleta: {data_coleta}\n")
+    logger.info("BOOK TRENDS — OPEN LIBRARY")
+    logger.info("Data da coleta: %s", data_coleta)
 
     brutos = []
     for nome_genero, termo in GENEROS.items():
-        print(f"\nGênero: {nome_genero}")
+        logger.info("Gênero: %s", nome_genero)
         brutos.extend(coletar_genero(nome_genero, termo))
         time.sleep(PAUSA_SEGUNDOS)
 
     if not brutos:
-        print("Nenhum livro coletado. Encerrando.")
+        logger.warning("Nenhum livro coletado. Encerrando.")
         return
 
-    print("Registros brutos coletados:", len(brutos))
+    logger.info("Registros brutos coletados: %d", len(brutos))
 
     df_raw = pd.DataFrame(brutos)
     for coluna in df_raw.columns:
@@ -37,9 +41,8 @@ def main():
     salvar_csv(df_generos, BASE_DIR / "processed" / "livros_generos.csv")
     salvar_historico(df_livros, BASE_DIR / "historico" / f"livros_{mes}.csv")
 
-    print("COLETA FINALIZADA")
-    print(f"Livros únicos: {len(df_livros)}")
-    print(f"Relações livro/gênero: {len(df_generos)}")
-    print(f"Registros brutos: {len(df_raw)}")
-    print("\nArquivos gerados em:")
-    print(BASE_DIR.resolve())
+    logger.info("COLETA FINALIZADA")
+    logger.info("Livros únicos: %d", len(df_livros))
+    logger.info("Relações livro/gênero: %d", len(df_generos))
+    logger.info("Registros brutos: %d", len(df_raw))
+    logger.info("Arquivos gerados em: %s", BASE_DIR.resolve())
