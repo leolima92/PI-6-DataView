@@ -6,3 +6,6 @@ venv/
 .env
 data/
 logs/
+
+# Claude Code worktrees / local state
+.claude/
