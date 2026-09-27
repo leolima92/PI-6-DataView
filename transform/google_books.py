@@ -4,8 +4,11 @@ Regras (para respeitar a cota da API do Google Books):
 - só consulta livros que têm ISBN;
 - prioriza os mais populares (want_to_read) e limita a GB_MAX_LIVROS por rodada;
 - guarda um cache em disco, então ISBNs já buscados não são reconsultados.
-Os campos gb_* são atributos do livro (sinopse, categorias etc.), não série
-temporal — por isso ficam na tabela de livros, não no histórico.
+Os campos gb_* são majoritariamente atributos estáticos do livro (sinopse,
+categorias etc.), mas o resultado do merge é gravado tanto no snapshot
+(processed/livros_merged.csv) quanto no histórico acumulado
+(historico/livros_merged_{AAAA-MM}.csv, ver merge.py), para manter também
+a série temporal de nota/avaliações junto com os campos gb_*.
 """
 
 import json

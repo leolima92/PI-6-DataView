@@ -25,6 +25,14 @@ Open Library (search.json)
         │  histórico
         ▼
    historico/livros_AAAA-MM.csv   (snapshots do mês)
+        │  merge Google Books (merge.py)
+        ▼
+   processed/livros_merged.csv           (foto mais recente + gb_*)
+   historico/livros_merged_AAAA-MM.csv   (histórico + gb_*)
+        │  consolidar_historico.py (junta todos os meses)
+        ▼
+   historico/livros_consolidado.csv
+   historico/livros_merged_consolidado.csv
         │
         ▼
    Power BI / Python / Tableau
@@ -110,7 +118,11 @@ Tudo que costuma mudar está em `booktrends/config.py`:
 | `raw/openlibrary_AAAA-MM-DD.csv` | Resposta bruta da API (para auditoria)                         |
 | `processed/livros.csv`           | Uma linha por livro, no esquema do projeto (foto mais recente) |
 | `processed/livros_generos.csv`   | Relação livro × gênero (um livro pode ter vários gêneros)      |
+| `processed/livros_merged.csv`    | `livros.csv` enriquecido com os campos `gb_*` do Google Books (foto mais recente, gerado por `merge.py`) |
 | `historico/livros_AAAA-MM.csv`   | Snapshots do mês — é o que permite estudar a tendência         |
+| `historico/livros_merged_AAAA-MM.csv` | Mesmo histórico acumulado, já com os campos `gb_*` (gerado por `merge.py`) |
+| `historico/livros_consolidado.csv` | **Todos os meses juntos num único arquivo** — aponte o Power BI para este (gerado por `consolidar_historico.py`) |
+| `historico/livros_merged_consolidado.csv` | Mesma coisa, já com os campos `gb_*`                     |
 
 ### Esquema de `livros.csv`
 

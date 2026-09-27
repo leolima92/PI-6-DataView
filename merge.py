@@ -2,17 +2,21 @@
 Combina a base coletada com dados do Google Books (merge por ISBN).
 Uso (a partir da raiz do projeto), DEPOIS de rodar a coleta:
     python merge.py
-Lê  processed/livros.csv  e gera  processed/livros_merged.csv,
-acrescentando as colunas gb_* (sinopse, categorias, nota, etc.).
+Lê  processed/livros.csv  e gera  processed/livros_merged.csv (snapshot,
+sobrescrito a cada rodada), acrescentando as colunas gb_* (sinopse,
+categorias, nota, etc.), e acumula em
+historico/livros_merged_{AAAA-MM}.csv para manter série histórica.
 """
 
+import datetime as dt
 import logging
 import os
 
 import pandas as pd
-from dotenv import load_dotenv 
+from dotenv import load_dotenv
 from config import BASE_DIR
 from logging_setup import configurar_logging
+from load.csv_writer import salvar_historico
 from transform.google_books import merge
 
 logger = logging.getLogger(__name__)
@@ -42,6 +46,9 @@ def main():
     saida = BASE_DIR / "processed" / "livros_merged.csv"
     saida.parent.mkdir(parents=True, exist_ok=True)
     df_merged.to_csv(saida, index=False, encoding="utf-8-sig")
+
+    mes = dt.date.today().strftime("%Y-%m")
+    salvar_historico(df_merged, BASE_DIR / "historico" / f"livros_merged_{mes}.csv")
 
     # feedback: quantos foram efetivamente enriquecidos
     enriquecidos = df_merged["gb_titulo"].notna().sum() if "gb_titulo" in df_merged else 0
