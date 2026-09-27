@@ -1,5 +1,6 @@
 """
-Coleta diária completa: Open Library (coletar) + merge Google Books.
+Coleta diária completa: Open Library (coletar) + merge Google Books +
+consolidação do histórico.
 
 Pensado para rodar agendado, 1x por dia. Ver scripts/run_daily.ps1 e o
 README para registrar no Agendador de Tarefas do Windows.
@@ -18,6 +19,7 @@ import sys
 from logging_setup import configurar_logging
 from pipeline import main as coletar
 from merge import main as merge_google_books
+from consolidar_historico import main as consolidar_historico
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ def main() -> int:
     try:
         coletar()
         merge_google_books()
+        consolidar_historico()
     except Exception:
         logger.exception("ERRO na coleta diária")
         return 1
