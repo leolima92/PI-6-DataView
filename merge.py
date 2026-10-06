@@ -53,7 +53,8 @@ def main():
     )
 
     # feedback: quantos foram efetivamente enriquecidos
-    enriquecidos = df_merged["gb_titulo"].notna().sum() if "gb_titulo" in df_merged else 0
+    colunas_gb = [c for c in df_merged.columns if c.startswith("gb_")]
+    enriquecidos = int(df_merged[colunas_gb].notna().any(axis=1).sum()) if colunas_gb else 0
     logger.info(
         "-> %s (%d linhas, %d colunas; %d enriquecidos pelo Google Books)",
         saida,
