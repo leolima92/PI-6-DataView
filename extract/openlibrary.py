@@ -22,7 +22,7 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
-def buscar_pagina(termo_subject, page):
+def buscar_pagina(termo_subject, page, ordenacao="key"):
     """
     Executa uma requisição na Search API da Open Library.
 
@@ -33,8 +33,8 @@ def buscar_pagina(termo_subject, page):
         "fields": FIELDS,
         "limit": LIMIT_POR_PAGINA,
         "page": page,
-        # deixa a paginação mais determinística
-        "sort": "key",
+        # "key" deixa a paginação determinística; ver ORDENACOES no config
+        "sort": ordenacao,
     }
 
     for tentativa in range(MAX_RETRIES):
@@ -78,21 +78,22 @@ def buscar_pagina(termo_subject, page):
         f"Falha após todas as tentativas (subject={termo_subject}, page={page})"
     )
 
-def coletar_genero(nome_genero, termo_subject):
-    """Percorre as páginas de determinado gênero."""
+def coletar_genero(nome_genero, termo_subject, ordenacao="key", max_paginas=MAX_PAGINAS):
+    """Percorre as páginas de determinado gênero numa ordenação."""
     docs = []
 
-    for page in range(1, MAX_PAGINAS + 1):
-        dados = buscar_pagina(termo_subject, page)
+    for page in range(1, max_paginas + 1):
+        dados = buscar_pagina(termo_subject, page, ordenacao)
         lote = dados.get("docs", [])
 
         if not lote:
-            logger.info("%s: não existem mais resultados.", nome_genero)
+            logger.info("%s [%s]: não existem mais resultados.", nome_genero, ordenacao)
             break
 
-        # guarda o gênero da consulta em cada doc
+        # guarda o gênero e a ordenação da consulta em cada doc
         for doc in lote:
             doc["_genero"] = nome_genero
+            doc["_amostra"] = ordenacao
 
         docs.extend(lote)
 
@@ -100,8 +101,9 @@ def coletar_genero(nome_genero, termo_subject):
         total = dados.get("num_found", dados.get("numFound", 0))
 
         logger.info(
-            "%s: página %s (+%d registros | acumulado %d | disponíveis %s)",
+            "%s [%s]: página %s (+%d registros | acumulado %d | disponíveis %s)",
             nome_genero,
+            ordenacao,
             page,
             len(lote),
             len(docs),

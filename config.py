@@ -10,6 +10,11 @@ load_dotenv()
 # na raiz do projeto.
 BASE_DIR = Path(os.getenv("BOOK_TRENDS_DIR") or Path(__file__).parent / "data")
 
+
+def pasta_do_mes(subpasta, data):
+    """Pasta mensal dentro do BASE_DIR, ex.: raw/2026-10."""
+    return BASE_DIR / subpasta / f"{data:%Y-%m}"
+
 # IDENTIFICAÇÃO (a Open Library exige um User-Agent com contato)
 CONTACT_EMAIL = "leonardolima2003@gmail.com"
 USER_AGENT = f"BookTrends/0.1 (projeto academico; contato: {CONTACT_EMAIL})"
@@ -31,6 +36,19 @@ GENEROS = {
 LIMIT_POR_PAGINA = 100
 # 20 páginas × 100 livros = até 2.000 resultados por gênero
 MAX_PAGINAS = 20
+
+# AMOSTRAGEM
+# ordenação da Search API -> nº de páginas por gênero.
+# "key" é a amostra original: estável e comparável dia a dia, mas pega só
+# os IDs mais antigos (livros catalogados até ~2010). As demais completam
+# com livros recentes ("new") e com os mais lidos ("readinglog"), para dar
+# para estudar fenômenos recentes. A coluna "amostra" diz de onde veio
+# cada livro — para estatísticas sem viés, filtre amostra contendo "key".
+ORDENACOES = {
+    "key": MAX_PAGINAS,
+    "new": 5,
+    "readinglog": 5,
+}
 # Pausa conservadora entre chamadas
 PAUSA_SEGUNDOS = 1.0
 TIMEOUT = 30

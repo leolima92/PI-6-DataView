@@ -35,6 +35,7 @@ def normalizar(doc, data_coleta):
         "autor": autor,
         "ano_publicacao": doc.get("first_publish_year"),
         "genero": doc.get("_genero"),
+        "amostra": doc.get("_amostra"),
         "editora": primeiro(doc.get("publisher")),
         "paginas": doc.get("number_of_pages_median"),
         "idioma": idioma,
@@ -81,11 +82,20 @@ def preparar_dados(brutos, data_coleta):
         .rename("generos")
     )
 
+    # ordenações (amostras) em que o livro apareceu, ex.: "key; readinglog"
+    amostras_agrupadas = (
+        df_long[["id_livro", "amostra"]]
+        .dropna()
+        .groupby("id_livro")["amostra"]
+        .apply(lambda valores: "; ".join(sorted(set(valores))))
+    )
+
     # uma linha por livro
     df_livros = (
-        df_long.drop(columns=["genero"])
+        df_long.drop(columns=["genero", "amostra"])
         .drop_duplicates(subset=["id_livro"], keep="first")
         .merge(generos_agrupados, on="id_livro", how="left")
+        .merge(amostras_agrupadas, on="id_livro", how="left")
         .reset_index(drop=True)
     )
 
