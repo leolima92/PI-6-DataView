@@ -5,7 +5,7 @@ Uso (a partir da raiz do projeto), DEPOIS de rodar a coleta:
 Lê  processed/livros.csv  e gera  processed/livros_merged.csv (snapshot,
 sobrescrito a cada rodada), acrescentando as colunas gb_* (sinopse,
 categorias, nota, etc.), e acumula em
-historico/livros_merged_{AAAA-MM}.csv para manter série histórica.
+historico/AAAA-MM/livros_merged_AAAA-MM.csv para manter série histórica.
 """
 
 import datetime as dt
@@ -14,7 +14,7 @@ import os
 
 import pandas as pd
 from dotenv import load_dotenv
-from config import BASE_DIR
+from config import BASE_DIR, pasta_do_mes
 from logging_setup import configurar_logging
 from load.csv_writer import salvar_historico
 from transform.google_books import merge
@@ -47,8 +47,10 @@ def main():
     saida.parent.mkdir(parents=True, exist_ok=True)
     df_merged.to_csv(saida, index=False, encoding="utf-8-sig")
 
-    mes = dt.date.today().strftime("%Y-%m")
-    salvar_historico(df_merged, BASE_DIR / "historico" / f"livros_merged_{mes}.csv")
+    hoje = dt.date.today()
+    salvar_historico(
+        df_merged, pasta_do_mes("historico", hoje) / f"livros_merged_{hoje:%Y-%m}.csv"
+    )
 
     # feedback: quantos foram efetivamente enriquecidos
     enriquecidos = df_merged["gb_titulo"].notna().sum() if "gb_titulo" in df_merged else 0

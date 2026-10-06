@@ -1,8 +1,10 @@
 """
 Consolida o histórico mensal num único CSV, pronto para o Power BI.
 
-historico/ guarda um arquivo por mês (livros_AAAA-MM.csv,
-livros_merged_AAAA-MM.csv). Esse script junta todos os meses em:
+historico/ guarda um arquivo por mês, cada um na pasta do mês
+(historico/AAAA-MM/livros_AAAA-MM.csv e livros_merged_AAAA-MM.csv).
+Arquivos antigos soltos direto em historico/ também são lidos.
+Esse script junta todos os meses em:
 
     historico/livros_consolidado.csv
     historico/livros_merged_consolidado.csv
@@ -29,7 +31,10 @@ PADRAO_MERGED = re.compile(r"^livros_merged_\d{4}-\d{2}\.csv$")
 
 
 def _consolidar(pasta, padrao, saida):
-    arquivos = sorted(p for p in pasta.glob("*.csv") if padrao.match(p.name))
+    # rglob: pega as pastas mensais e arquivos antigos soltos em historico/
+    arquivos = sorted(
+        (p for p in pasta.rglob("*.csv") if padrao.match(p.name)), key=lambda p: p.name
+    )
 
     if not arquivos:
         logger.warning("Nenhum arquivo encontrado para o padrão %s em %s", padrao.pattern, pasta)

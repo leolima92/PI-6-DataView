@@ -3,7 +3,7 @@
 # datado. Sai com o mesmo código de saída do Python (0 = ok).
 #
 # O log detalhado da coleta é gravado pelo próprio Python em
-# <BASE_DIR>/logs/coleta_AAAA-MM-DD.log (ver logging_setup.py).
+# <BASE_DIR>/logs/AAAA-MM/coleta_AAAA-MM-DD.log (ver logging_setup.py).
 # Este arquivo grava um log de "bootstrap" — serve para o caso de o
 # Python nem chegar a iniciar (Python errado, erro de import, G: fora).
 
@@ -12,14 +12,15 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
-# Preferência: mesma pasta de logs da coleta (Google Drive). Se o G: não
-# estiver acessível, cai para ./logs dentro do repositório.
-$driveLogs = "G:\Meu Drive\book-trends\logs"
+# Preferência: mesma pasta de logs da coleta (Google Drive), separada por
+# mês. Se o G: não estiver acessível, cai para ./logs/AAAA-MM no repositório.
+$mes = "{0:yyyy-MM}" -f (Get-Date)
+$driveLogs = "G:\Meu Drive\book-trends\logs\$mes"
 try {
     New-Item -ItemType Directory -Force -Path $driveLogs -ErrorAction Stop | Out-Null
     $logDir = $driveLogs
 } catch {
-    $logDir = Join-Path $repo "logs"
+    $logDir = Join-Path (Join-Path $repo "logs") $mes
     New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 }
 $log = Join-Path $logDir ("run_daily_{0:yyyy-MM-dd}.log" -f (Get-Date))

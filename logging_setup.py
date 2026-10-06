@@ -6,7 +6,7 @@ Chame ``configurar_logging()`` uma única vez, no início da execução
 módulo usa ``logging.getLogger(__name__)`` e a saída vai para:
 
 - o console (stdout);
-- um arquivo datado em ``<BASE_DIR>/logs/coleta_AAAA-MM-DD.log``.
+- um arquivo datado em ``<BASE_DIR>/logs/AAAA-MM/coleta_AAAA-MM-DD.log``.
 
 ``BASE_DIR`` vem do ``config`` (por padrão ``G:/Meu Drive/book-trends``),
 então o log fica na mesma pasta dos CSVs. Rodar de novo no mesmo dia
@@ -27,14 +27,16 @@ _configurado = False
 
 
 def _pasta_de_logs() -> Path:
-    """Pasta de logs dentro do BASE_DIR; cai para ``./logs`` se o BASE_DIR
-    (ex.: o Google Drive) não estiver acessível."""
+    """Pasta de logs do mês dentro do BASE_DIR (``logs/AAAA-MM``); cai para
+    ``./logs/AAAA-MM`` se o BASE_DIR (ex.: o Google Drive) não estiver
+    acessível."""
+    mes = f"{dt.date.today():%Y-%m}"
     try:
-        alvo = Path(BASE_DIR) / "logs"
+        alvo = Path(BASE_DIR) / "logs" / mes
         alvo.mkdir(parents=True, exist_ok=True)
         return alvo
     except OSError:
-        alvo = Path(__file__).resolve().parent / "logs"
+        alvo = Path(__file__).resolve().parent / "logs" / mes
         alvo.mkdir(parents=True, exist_ok=True)
         return alvo
 
