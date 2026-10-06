@@ -11,6 +11,7 @@ import requests
 from config import (
     GOOGLE_BOOKS_URL,
     GOOGLE_BOOKS_API_KEY,
+    GB_ESPERA_RETRY,
     TIMEOUT,
     MAX_RETRIES,
 )
@@ -53,7 +54,16 @@ def buscar_por_isbn(isbn):
             return itens[0].get("volumeInfo", {})
 
         if resp.status_code in (429, 500, 502, 503, 504):
-            espera = min(60, 2 ** tentativa)
+            # 503 do Google Books costuma ser sobrecarga momentânea: espera
+            # mais (5s, 10s, 20s...) em vez de bater de novo em 1s
+            espera = GB_ESPERA_RETRY * 2 ** tentativa
+            retry_after = resp.headers.get("Retry-After")
+            if retry_after:
+                try:
+                    espera = max(espera, float(retry_after))
+                except ValueError:
+                    pass
+            espera = min(60, espera)
             logger.warning(
                 "HTTP %s (GB); nova tentativa em %ss", resp.status_code, espera
             )
