@@ -96,3 +96,4 @@ GOOGLE_BOOKS_API_KEY = os.getenv("GOOGLE_BOOKS_API_KEY", "")
 GB_MAX_LIVROS = 500           # nº de livros a consultar por rodada (protege a cota)
 GB_PAUSA_SEGUNDOS = 5.0       # pausa entre consultas ao Google Books
 GB_ESPERA_RETRY = 5.0         # 1ª espera após 429/5xx; dobra a cada nova falha (máx. 60s)
+GB_MAX_FALHAS_SEGUIDAS = 3    # ISBNs seguidos sem resposta antes de desistir do Google Books na rodada
