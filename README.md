@@ -15,7 +15,7 @@ tudo em CSV, pronto para visualizar em Power BI, Python ou Tableau.
 
 ```text
 Open Library (search.json)
-        │  GET paginado por gênero × ordenação (key, new, readinglog)
+        │  GET paginado por gênero × amostra (readinglog, readinglog_pt), até 2020
         ▼
    JSON bruto  ──►  raw/AAAA-MM/openlibrary_AAAA-MM-DD.csv
         │  normalização
@@ -33,7 +33,13 @@ Open Library (search.json)
         ▼
    historico/livros_consolidado.csv
    historico/livros_merged_consolidado.csv
-        │  analise_perfis.py (classifica cada livro)
+        │  tratar.py (limpa, junta works duplicados, marca os conhecidos)
+        ▼
+   historico/livros_tratado.csv  +  processed/livros_analise.csv  +  processed/livros_top.csv
+        │  traduzir_titulos.py (título da edição em português, com cache)
+        ▼
+   processed/livros_analise.csv  (+ titulo_exibicao, titulo_pt, titulo_pt_fonte)
+        │  analise_perfis.py (classifica cada livro conhecido)
         ▼
    processed/perfis_livros.csv  +  analise/AAAA-MM/perfis_AAAA-MM-DD.csv
         │
@@ -178,22 +184,65 @@ rode em datas diferentes — a série temporal se forma pela combinação
 
 ---
 
-## Amostragem (`ORDENACOES`)
+## Amostragem (`AMOSTRAS`)
 
-A Search API devolve os resultados numa ordem, e só dá para paginar até
-certo ponto. Por isso a coleta junta três "amostras" por gênero:
+A Search API devolve os resultados numa ordem e só pagina até certo ponto.
+Cada amostra em `config.py` define ordenação, idioma e nº de páginas por gênero:
 
-| Ordenação    | O que traz                                    | Para quê                          |
-| ------------ | --------------------------------------------- | --------------------------------- |
-| `key`        | IDs mais antigos da Open Library (estável)    | Série histórica comparável dia a dia; base sem viés de popularidade |
-| `new`        | Livros publicados mais recentemente           | Estudar fenômenos recentes        |
-| `readinglog` | Livros mais presentes nas estantes dos leitores | Garantir que os mais lidos estejam na base |
+| Amostra         | O que traz                                             |
+| --------------- | ------------------------------------------------------ |
+| `readinglog`    | Livros mais presentes nas estantes dos leitores (principal, obrigatória) |
+| `readinglog_pt` | Mesma ordenação, só obras com edição em português      |
 
-Só `key` cobre bem livros antigos: os IDs antigos são de livros catalogados
-até ~2010, então sem as outras amostras quase não há livros recentes.
-Para estatísticas "da população" (ex.: % de livros esquecidos), filtre
-`amostra` contendo `key` — as outras puxam para o lado dos populares/novos.
-Se uma amostra extra falhar, a coleta segue sem ela (só `key` é obrigatória).
+Todas filtram `first_publish_year` até `ANO_MAX_PUBLICACAO` (2020).
+
+Até nov/2026 a amostra principal era `key` (IDs mais antigos da Open
+Library), que trazia sobretudo livros obscuros: metade da base tinha 0
+leitores. O histórico antigo continua lá; o `tratar.py` filtra os livros
+desconhecidos na hora da análise.
+
+---
+
+## Tratamento (`tratar.py`)
+
+Lê `historico/livros_consolidado.csv` e aplica as regras de
+`transform/tratamento.py`:
+
+- descarta IDs que não são de obra (`...M`, de edição);
+- ano impossível (0, 9183...) vira vazio; tipos inteiros (`Int64`);
+- contador de leitores ausente vira 0; `nota_media` fica vazia quando não há avaliações;
+- `autor_principal` = primeiro nome da lista de autores;
+- **works duplicados** da Open Library (mesmo título + autor normalizados)
+  viram uma obra só: leitores, avaliações e edições somados, menor ano,
+  IDs originais em `ids_agrupados`;
+- flags `conhecido` (≥ `MIN_LEITORES` leitores **ou** ≥ `MIN_EDICOES` edições),
+  `no_periodo` (publicado até 2020) e `tem_pt` (tem edição em português).
+
+Saídas: `historico/livros_tratado.csv` (série completa),
+`processed/livros_analise.csv` (uma linha por obra conhecida, aponte o BI
+para este) e `processed/livros_top.csv` (30 mais lidos por gênero, para
+conferir a base).
+
+---
+
+## Títulos em português (`traduzir_titulos.py`)
+
+Sem tradução automática: título traduzido ao pé da letra sai errado
+(*Nineteen Eighty-Four* é *1984* no Brasil). O título vem de uma edição
+real em português (`transform/titulos.py`):
+
+1. **Open Library**: edições do próprio work em `por`; fica o título mais
+   frequente entre elas (só obras com `tem_pt`).
+2. **Google Books**: busca título + autor com `langRestrict=pt`; só aceita
+   se o sobrenome do autor bater.
+3. Senão, fica o original.
+
+Colunas: `titulo_exibicao` (use esta nos gráficos), `titulo_pt` e
+`titulo_pt_fonte` (`openlibrary`, `google_books`, `original`). As respostas
+ficam em `cache/titulos_pt.json`, então cada obra é consultada uma vez.
+Cada rodada consulta até `TITULOS_MAX_POR_RODADA` obras (das mais lidas
+para as menos lidas), e no máximo `TITULOS_GB_MAX` delas no Google Books,
+para não estourar a cota diária junto com o `merge.py`.
 
 ---
 
@@ -204,7 +253,7 @@ e outros desaparecem*, cada livro recebe um perfil. "Leitores" =
 `want_to_read + currently_reading + already_read`; nº de edições mede a
 relevância passada (só é reeditado o que teve procura).
 
-| Perfil                   | Regra (limiares = top 10% da amostra `key`)                      |
+| Perfil                   | Regra (limiares = top 10% das obras conhecidas)                  |
 | ------------------------ | ---------------------------------------------------------------- |
 | Clássico vivo            | Publicado até 1976, muito reeditado **e** muito lido hoje        |
 | Esquecido                | Publicado até 1996, muito reeditado, mas ≤ 2 leitores hoje       |
@@ -212,8 +261,10 @@ relevância passada (só é reeditado o que teve procura).
 | Fenômeno recente         | Publicado de 1997 em diante, muito lido com poucas edições       |
 | Cauda longa              | O resto — a grande maioria, com pouca ou nenhuma leitura         |
 
-Roda sozinho no fim do `run_diario.py`. O perfil "Redescoberto" fica mais
-confiável quanto mais meses de histórico houver.
+Roda sozinho no fim do `run_diario.py`, depois do `tratar.py`. O
+crescimento só é calculado para livros presentes na última coleta e vistos
+em 2+ datas (`dias_acompanhado`); `crescimento_pct_30d` normaliza por mês.
+O perfil "Redescoberto" fica mais confiável quanto mais meses de histórico houver.
 
 ---
 

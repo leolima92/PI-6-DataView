@@ -1,11 +1,12 @@
 """
 Consulta ao Google Books API (busca por ISBN).
 
-buscar_por_isbn -> volumeInfo do 1º volume que casa com o ISBN, ou None
-campos_google   -> extrai do volumeInfo apenas as colunas gb_* do projeto
+buscar_por_isbn   -> volumeInfo do 1º volume que casa com o ISBN, ou None
+buscar_edicoes_pt -> volumeInfo das edições em português (título + autor)
+campos_google     -> extrai do volumeInfo apenas as colunas gb_* do projeto
 
 Quando o Google Books não responde (429/5xx/erro de rede depois de todas as
-tentativas, ou 403 de cota), buscar_por_isbn levanta GoogleBooksIndisponivel
+tentativas, ou 403 de cota), as funções de busca levantam GoogleBooksIndisponivel
 em vez de devolver None. Assim quem chama distingue "livro não encontrado"
 de "API fora do ar" e não grava a falha no cache como se fosse resposta.
 """
@@ -34,14 +35,13 @@ SESSION_GB = requests.Session()
 SESSION_GB.headers.update({"Accept": "application/json"})
 
 
-def buscar_por_isbn(isbn):
+def _consultar(params, descricao):
     """
-    Consulta o Google Books por ISBN e retorna o volumeInfo do 1º
-    resultado, ou None se o Google Books responder que não achou.
-    Retry/backoff em 429/5xx e erros de rede; se todas as tentativas
+    GET no Google Books com retry/backoff em 429/5xx e erros de rede.
+    Devolve a lista de itens (vazia se não achou). Se todas as tentativas
     falharem, levanta GoogleBooksIndisponivel.
     """
-    params = {"q": f"isbn:{isbn}"}
+    params = dict(params)
     if GOOGLE_BOOKS_API_KEY:
         params["key"] = GOOGLE_BOOKS_API_KEY
 
@@ -65,11 +65,8 @@ def buscar_por_isbn(isbn):
             try:
                 dados = resp.json()
             except ValueError:
-                return None
-            itens = dados.get("items")
-            if not itens:
-                return None
-            return itens[0].get("volumeInfo", {})
+                return []
+            return dados.get("items") or []
 
         if resp.status_code in (429, 500, 502, 503, 504):
             # 503 do Google Books ("backendFailed") é falha do lado deles:
@@ -91,7 +88,7 @@ def buscar_por_isbn(isbn):
             continue
 
         # 403 no Google Books normalmente é estouro de cota / limite:
-        # não adianta tentar os próximos ISBNs hoje.
+        # não adianta tentar as próximas consultas hoje.
         if resp.status_code == 403:
             raise GoogleBooksIndisponivel(
                 "HTTP 403 — provável limite de cota. "
@@ -101,8 +98,33 @@ def buscar_por_isbn(isbn):
         resp.raise_for_status()
 
     raise GoogleBooksIndisponivel(
-        f"ISBN {isbn}: sem resposta após {MAX_RETRIES} tentativas ({ultimo_erro})"
+        f"{descricao}: sem resposta após {MAX_RETRIES} tentativas ({ultimo_erro})"
     )
+
+
+def buscar_por_isbn(isbn):
+    """
+    Consulta o Google Books por ISBN e retorna o volumeInfo do 1º
+    resultado, ou None se o Google Books responder que não achou.
+    """
+    itens = _consultar({"q": f"isbn:{isbn}"}, f"ISBN {isbn}")
+    if not itens:
+        return None
+    return itens[0].get("volumeInfo", {})
+
+
+def buscar_edicoes_pt(titulo, autor):
+    """
+    Busca no Google Books edições em português de um livro (título + autor).
+    Devolve a lista de volumeInfo com language == "pt" (pode ser vazia).
+    """
+    termos = [f'intitle:"{titulo}"']
+    if autor:
+        termos.append(f'inauthor:"{autor}"')
+    params = {"q": " ".join(termos), "langRestrict": "pt", "maxResults": 10, "printType": "books"}
+    itens = _consultar(params, f"título pt de {titulo!r}")
+    volumes = [i.get("volumeInfo", {}) for i in itens]
+    return [v for v in volumes if str(v.get("language", "")).lower().startswith("pt")]
 
 
 def _espera(tentativa):

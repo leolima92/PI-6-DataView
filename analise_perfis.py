@@ -4,8 +4,9 @@ Classifica cada livro num perfil de popularidade ao longo do tempo.
 Pergunta do projeto: por que alguns livros continuam sendo lidos décadas
 depois de publicados, enquanto outros desaparecem do interesse dos leitores?
 
-Lê historico/livros_consolidado.csv (gerado por consolidar_historico.py),
-compara a primeira e a última coleta de cada livro e grava:
+Lê historico/livros_tratado.csv (gerado por tratar.py), usa só as obras
+conhecidas e publicadas até ANO_MAX_PUBLICACAO, compara a primeira e a
+última coleta de cada livro e grava:
 
     processed/perfis_livros.csv               (foto atual, para o Power BI)
     analise/AAAA-MM/perfis_AAAA-MM-DD.csv     (cópia datada, por mês)
@@ -33,6 +34,7 @@ import pandas as pd
 from config import BASE_DIR, pasta_do_mes
 from load.csv_writer import salvar_csv
 from logging_setup import configurar_logging
+from transform.titulos import aplicar_titulos
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +54,14 @@ def _leitores(df):
 
 
 def classificar(hist):
-    """Recebe o histórico consolidado e devolve uma linha por livro com o perfil."""
+    """Recebe o histórico tratado e devolve uma linha por livro com o perfil."""
     hist = hist.copy()
+    for flag in ("conhecido", "no_periodo"):
+        if flag in hist.columns:
+            hist = hist[hist[flag].astype(str).str.lower() == "true"]
     hist["leitores"] = _leitores(hist)
     hist = hist.sort_values("data_coleta")
+    ultima_coleta = hist["data_coleta"].max()
 
     # drop_duplicates (e não groupby.first/last) para não misturar colunas
     # de coletas diferentes quando há valores vazios
@@ -64,16 +70,19 @@ def classificar(hist):
 
     df["data_primeira_coleta"] = primeiro["data_coleta"]
     df["leitores_inicio"] = primeiro["leitores"]
-    df["ganho_leitores"] = df["leitores"] - df["leitores_inicio"]
+    df["dias_acompanhado"] = (
+        pd.to_datetime(df["data_coleta"]) - pd.to_datetime(df["data_primeira_coleta"])
+    ).dt.days
+    # crescimento só vale para quem está na última coleta e foi visto em
+    # pelo menos 2 datas: senão a janela de comparação muda de livro a livro
+    comparavel = (df["data_coleta"] == ultima_coleta) & (df["dias_acompanhado"] > 0)
+    df["ganho_leitores"] = (df["leitores"] - df["leitores_inicio"]).where(comparavel)
+    # +5 no denominador suaviza livros com poucos leitores (1 -> 2 não é +100%)
     df["crescimento_pct"] = df["ganho_leitores"] / (df["leitores_inicio"] + 5) * 100
+    df["crescimento_pct_30d"] = df["crescimento_pct"] / df["dias_acompanhado"] * 30
 
-    # limiares calculados só na amostra "key" (sem viés de popularidade),
-    # quando a coluna existir; senão em todos
+    # limiares calculados sobre as obras conhecidas da base
     base = df
-    if "amostra" in df.columns:
-        sem_vies = df["amostra"].fillna("key").str.contains("key")
-        if sem_vies.any():
-            base = df[sem_vies]
     lim_edicoes = base["qtd_edicoes"].quantile(PERCENTIL)
     lim_leitores = base["leitores"].quantile(PERCENTIL)
     logger.info(
@@ -103,24 +112,23 @@ def classificar(hist):
 
     df["idade"] = dt.date.today().year - ano
     colunas = [
-        "titulo", "autor", "ano_publicacao", "idade", "generos", "qtd_edicoes",
+        "titulo", "autor_principal", "ano_publicacao", "idade", "generos", "qtd_edicoes",
         "nota_media", "qtd_avaliacoes", *COLUNAS_LEITORES, "leitores",
-        "data_primeira_coleta", "data_coleta", "leitores_inicio",
-        "ganho_leitores", "crescimento_pct", "perfil",
+        "data_primeira_coleta", "data_coleta", "dias_acompanhado", "leitores_inicio",
+        "ganho_leitores", "crescimento_pct", "crescimento_pct_30d", "perfil",
     ]
-    if "amostra" in df.columns:
-        colunas.append("amostra")
+    colunas += [c for c in ("tem_pt", "amostra", "ids_agrupados") if c in df.columns]
     return df[colunas].reset_index()
 
 
 def main():
-    entrada = BASE_DIR / "historico" / "livros_consolidado.csv"
+    entrada = BASE_DIR / "historico" / "livros_tratado.csv"
     if not entrada.exists():
-        logger.error("Não encontrei %s. Rode 'python consolidar_historico.py' primeiro.", entrada)
+        logger.error("Não encontrei %s. Rode 'python tratar.py' primeiro.", entrada)
         return
 
-    hist = pd.read_csv(entrada, encoding="utf-8-sig")
-    perfis = classificar(hist)
+    hist = pd.read_csv(entrada, encoding="utf-8-sig", low_memory=False)
+    perfis = aplicar_titulos(classificar(hist))
 
     hoje = dt.date.today()
     salvar_csv(perfis, BASE_DIR / "processed" / "perfis_livros.csv")

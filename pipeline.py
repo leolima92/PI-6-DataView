@@ -3,7 +3,7 @@ import time
 import datetime as dt
 import pandas as pd
 import requests
-from config import BASE_DIR, GENEROS, ORDENACOES, PAUSA_SEGUNDOS, pasta_do_mes
+from config import BASE_DIR, GENEROS, AMOSTRAS, AMOSTRA_PRINCIPAL, PAUSA_SEGUNDOS, pasta_do_mes
 from helpers import lista_para_texto
 from extract.openlibrary import coletar_genero
 from transform.normalizar import preparar_dados
@@ -21,18 +21,23 @@ def main():
     logger.info("Data da coleta: %s", data_coleta)
 
     brutos = []
-    for ordenacao, max_paginas in ORDENACOES.items():
+    for nome_amostra, (ordenacao, idioma, max_paginas) in AMOSTRAS.items():
         for nome_genero, termo in GENEROS.items():
-            logger.info("Gênero: %s (ordenação: %s)", nome_genero, ordenacao)
+            logger.info("Gênero: %s (amostra: %s)", nome_genero, nome_amostra)
             try:
-                brutos.extend(coletar_genero(nome_genero, termo, ordenacao, max_paginas))
+                brutos.extend(
+                    coletar_genero(
+                        nome_genero, termo, ordenacao, max_paginas,
+                        idioma=idioma, nome_amostra=nome_amostra,
+                    )
+                )
             except (requests.RequestException, RuntimeError):
-                # "key" é a série principal: se ela falhar, a coleta falha.
+                # a amostra principal é obrigatória: se ela falhar, a coleta falha.
                 # As amostras extras são complemento e não derrubam a coleta.
-                if ordenacao == "key":
+                if nome_amostra == AMOSTRA_PRINCIPAL:
                     raise
                 logger.exception(
-                    "Falha na amostra extra %s/%s; seguindo sem ela.", nome_genero, ordenacao
+                    "Falha na amostra extra %s/%s; seguindo sem ela.", nome_genero, nome_amostra
                 )
             time.sleep(PAUSA_SEGUNDOS)
 
