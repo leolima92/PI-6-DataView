@@ -156,14 +156,15 @@ def classificar(hist):
 
     df["idade"] = dt.date.today().year - ano
     colunas = [
-        "titulo", "autor_principal", "ano_publicacao", "idade", "generos", "qtd_edicoes",
+        "titulo", "autor_principal", "ano_publicacao", "idade", "genero_principal", "genero_fonte",
+        "generos", "qtd_edicoes",
         "nota_media", "qtd_avaliacoes", *COLUNAS_LEITORES, "leitores",
         "data_primeira_coleta", "data_coleta", "dias_acompanhado", "leitores_inicio",
         "ganho_leitores", "crescimento_pct", "crescimento_pct_30d",
         "periodo", "pct_leitores_periodo", "pct_edicoes_periodo", "perfil",
     ]
-    colunas += [c for c in ("tem_pt", "amostra", "ids_agrupados") if c in df.columns]
-    return df[colunas].reset_index()
+    colunas += ["tem_pt", "amostra", "ids_agrupados"]
+    return df[[c for c in colunas if c in df.columns]].reset_index()
 
 
 def main():
