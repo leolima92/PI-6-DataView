@@ -4,6 +4,8 @@ Tratamento do histórico consolidado antes da análise e da visualização.
 limpar          -> só IDs de obra (W), tipos certos, nulos consistentes
 chave_obra      -> título + autor normalizados, para achar obras duplicadas
 deduplicar      -> junta works duplicados da Open Library numa obra só
+corrigir         -> aplica dados/correcoes_livros.csv (gênero e ano manuais)
+genero_principal -> um gênero por obra (manual ou pela ORDEM_GENEROS)
 marcar_conhecidos -> flag "conhecido" (MIN_LEITORES ou MIN_EDICOES)
 tratar          -> roda tudo e devolve (histórico tratado, foto atual)
 
@@ -16,15 +18,17 @@ leitores, avaliações e edições são somados e o ano é o menor entre elas.
 import logging
 import re
 import unicodedata
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from config import ANO_MAX_PUBLICACAO, MIN_EDICOES, MIN_LEITORES
+from config import ANO_MAX_PUBLICACAO, MIN_EDICOES, MIN_LEITORES, ORDEM_GENEROS
 
 logger = logging.getLogger(__name__)
 
 COLUNAS_LEITORES = ["want_to_read", "currently_reading", "already_read"]
+CORRECOES_PATH = Path(__file__).resolve().parents[1] / "dados" / "correcoes_livros.csv"
 COLUNAS_INTEIRAS = [
     "ano_publicacao", "paginas", "qtd_avaliacoes", "qtd_edicoes",
     *COLUNAS_LEITORES, "cover_id",
@@ -154,6 +158,65 @@ def deduplicar(df):
     return out.drop(columns=["_nota_x_qtd"])
 
 
+def carregar_correcoes(caminho=CORRECOES_PATH):
+    """Tabela manual: id_livro, genero_principal e ano_publicacao (opcional)."""
+    if not caminho.exists():
+        logger.warning("Sem correções manuais (%s não existe)", caminho)
+        return pd.DataFrame(columns=["id_livro", "genero_principal", "ano_publicacao"])
+    correcoes = pd.read_csv(caminho, encoding="utf-8-sig", dtype={"id_livro": str})
+    correcoes["ano_publicacao"] = pd.to_numeric(correcoes["ano_publicacao"], errors="coerce")
+    return correcoes
+
+
+def _genero_automatico(generos):
+    """Primeiro gênero da ORDEM_GENEROS entre os da Open Library."""
+    if not isinstance(generos, str) or not generos.strip():
+        return None
+    lista = [g.strip() for g in generos.split(";") if g.strip()]
+    conhecidos = [g for g in lista if g in ORDEM_GENEROS]
+    if not conhecidos:
+        return lista[0]
+    return min(conhecidos, key=ORDEM_GENEROS.index)
+
+
+def corrigir(df, correcoes):
+    """
+    Aplica as correções manuais e cria genero_principal + genero_fonte
+    ("manual" ou "automatico"). O ano manual substitui o da Open Library.
+    A correção vale para o ID canônico ou para qualquer ID agrupado nele.
+    """
+    df = df.copy()
+    if not correcoes.empty:
+        # um ID da tabela pode ter virado duplicado de outro canônico
+        por_id = correcoes.set_index("id_livro")
+        ids = df[["id_livro", "ids_agrupados"]].drop_duplicates("id_livro")
+        ids["candidatos"] = ids["ids_agrupados"].fillna(ids["id_livro"]).str.split("; ")
+        ids = ids.explode("candidatos")
+        ids = ids[ids["candidatos"].isin(por_id.index)].drop_duplicates("id_livro")
+        mapa = ids.set_index("id_livro")["candidatos"]
+        id_tabela = df["id_livro"].map(mapa)
+    else:
+        por_id = correcoes.set_index("id_livro")
+        id_tabela = pd.Series(np.nan, index=df.index)
+
+    genero_manual = id_tabela.map(por_id["genero_principal"]) if not correcoes.empty else id_tabela
+    ano_manual = id_tabela.map(por_id["ano_publicacao"]) if not correcoes.empty else id_tabela
+
+    df["genero_principal"] = genero_manual.fillna(df["generos"].map(_genero_automatico))
+    df["genero_fonte"] = np.where(genero_manual.notna(), "manual", "automatico")
+    df.loc[df["genero_principal"].isna(), "genero_fonte"] = None
+    df["ano_publicacao"] = ano_manual.fillna(df["ano_publicacao"])
+
+    obras = df.drop_duplicates("id_livro")
+    logger.info(
+        "Gênero principal: %d obras com correção manual (%d anos corrigidos), %d automáticas",
+        int((obras["genero_fonte"] == "manual").sum()),
+        int(ano_manual[df.index.isin(obras.index)].notna().sum()),
+        int((obras["genero_fonte"] == "automatico").sum()),
+    )
+    return df
+
+
 def marcar_conhecidos(df):
     """
     Flags por obra, calculadas na última coleta de cada uma:
@@ -182,11 +245,14 @@ def _tipar(df):
     return df
 
 
-def tratar(hist):
+def tratar(hist, correcoes=None):
     """Devolve (histórico tratado, foto atual só com obras conhecidas do período)."""
     linhas_antes, obras_antes = len(hist), hist["id_livro"].nunique()
+    correcoes = carregar_correcoes() if correcoes is None else correcoes
 
-    df = _tipar(marcar_conhecidos(deduplicar(limpar(hist))))
+    df = deduplicar(limpar(hist))
+    df = corrigir(df, correcoes)  # antes das flags: o ano corrigido muda no_periodo
+    df = _tipar(marcar_conhecidos(df))
     df = df.sort_values(["data_coleta", "id_livro"]).reset_index(drop=True)
 
     atual = df.drop_duplicates("id_livro", keep="last")

@@ -225,6 +225,32 @@ conferir a base).
 
 ---
 
+## Gênero principal e correções manuais
+
+Os gêneros da coleta vêm das tags (`subject`) da Open Library, que erram
+muito (Harry Potter vinha como História e Mistério). O `tratar.py` cria:
+
+- `genero_principal`: um gênero por obra;
+- `genero_fonte`: `manual` (da tabela) ou `automatico` (pela regra).
+
+**`dados/correcoes_livros.csv`** (versionado no repositório) tem o gênero
+certo dos 300 livros mais lidos e, quando a Open Library erra, o ano de
+publicação (ex.: *Lolita* vinha como 1777). Para corrigir outro livro, é só
+acrescentar uma linha (`id_livro, titulo, autor, genero_principal,
+ano_publicacao`); `titulo` e `autor` servem só de referência.
+
+Além dos 7 gêneros da coleta, a tabela usa três que não existem nas tags:
+**Ficção literária**, **Não ficção** e **Infantil**.
+
+Para os outros livros, o gênero principal é o primeiro da `ORDEM_GENEROS`
+(`config.py`) entre os da Open Library. A ordem foi escolhida testando
+todas as combinações contra a tabela manual: acerta 84% dos livros cujo
+gênero existe na Open Library. O ponto fraco é "História", que nos livros
+populares costuma ser ficção literária ou não ficção: para análises
+finas, filtre `genero_fonte == "manual"` ou amplie a tabela.
+
+---
+
 ## Títulos em português (`traduzir_titulos.py`)
 
 Sem tradução automática: título traduzido ao pé da letra sai errado

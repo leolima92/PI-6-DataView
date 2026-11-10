@@ -1,0 +1,301 @@
+id_livro,titulo,autor,genero_principal,ano_publicacao
+OL1968368W,The 48 Laws of Power,Robert Greene,Não ficção,
+OL18020194W,It Ends With Us,Colleen Hoover,Romance,
+OL82563W,Harry Potter and the Philosopher's Stone,J. K. Rowling,Fantasia,
+OL35351151W,Um casamento arranjado,Zana Kheiron,Romance,
+OL257943W,A Game of Thrones,George R. R. Martin,Fantasia,
+OL81613W,It,Stephen King,Terror,
+OL796465W,O Alquimista,Paulo Coelho,Ficção literária,
+OL28952677W,Icebreaker,Hannah Grace,Romance,
+OL17860744W,A Court of Mist and Fury,Sarah J. Maas,Fantasia,
+OL16014245W,Shatter Me,Tahereh Mafi,Ficção científica,
+OL1168083W,Nineteen Eighty-Four,George Orwell,Ficção científica,
+OL18108064W,Can't Hurt Me,David Goggins,Biografia,
+OL66554W,Pride and Prejudice,Jane Austen,Romance,
+OL5735363W,The Hunger Games,Suzanne Collins,Ficção científica,
+OL492658W,The Lightning Thief,Rick Riordan,Fantasia,
+OL20577143W,Ugly Love,Colleen Hoover,Romance,
+OL16336633W,Fifty Shades of Grey,E. L. James,Romance,2011
+OL82537W,Harry Potter and the Chamber of Secrets,J. K. Rowling,Fantasia,
+OL5720023W,Twilight,Stephenie Meyer,Romance,
+OL20646061W,A Good Girl's Guide to Murder,Holly Jackson,Mistério,
+OL1968364W,The Art of Seduction,Robert Greene,Não ficção,
+OL244537W,The Art of War,孙武 (Sun Tzu),Não ficção,
+OL17075811W,Sapiens,Yuval Noah Harari,História,
+OL82586W,Harry Potter and the Deathly Hallows,J. K. Rowling,Fantasia,
+OL82536W,Harry Potter and the Prisoner of Azkaban,J. K. Rowling,Fantasia,
+OL17850410W,The Cruel Prince,Holly Black,Fantasia,
+OL20068530W,Verity,Colleen Hoover,Mistério,
+OL1168007W,Animal Farm,George Orwell,Ficção literária,
+OL18203673W,The Seven Husbands of Evelyn Hugo,Taylor Jenkins Reid,Ficção literária,
+OL27482W,The Hobbit,J.R.R. Tolkien,Fantasia,
+OL20090688W,"Red, White & Royal Blue",Casey McQuiston,Romance,
+OL82560W,Harry Potter and the Goblet of Fire,J. K. Rowling,Fantasia,
+OL10263W,Le petit prince,Antoine de Saint-Exupéry,Infantil,
+OL273184W,The Intelligent Investor,Benjamin Graham,Não ficção,
+OL82548W,Harry Potter and the Order of the Phoenix,J. K. Rowling,Fantasia,
+OL2917168W,The Power of Positive Thinking,Norman Vincent Peale,Não ficção,
+OL16444438W,The Fault in Our Stars,John Green,Romance,
+OL17352669W,A Court of Thorns and Roses,Sarah J. Maas,Fantasia,
+OL893414W,Dune,Frank Herbert,Ficção científica,
+OL103123W,Fahrenheit 451,Ray Bradbury,Ficção científica,
+OL483391W,Charlotte's Web,E. B. White,Infantil,
+OL498556W,Metamorphosis,Franz Kafka,Ficção literária,
+OL1268413W,... Trotzdem Ja zum Leben sagen,Viktor Emil Frankl,Não ficção,
+OL8165007W,The Richest Man in Babylon,George S. Clason,Não ficção,
+OL81633W,The Shining,Stephen King,Terror,
+OL82565W,Harry Potter and the Half-Blood Prince,J. K. Rowling,Fantasia,
+OL21177W,Wuthering Heights,Emily Brontë,Romance,1847
+OL16509148W,The Song of Achilles,Madeline Miller,Fantasia,
+OL1230613W,L’étranger,Albert Camus,Ficção literária,
+OL166894W,Преступление и наказание,Fiódor Dostoievski,Ficção literária,
+OL7924103W,The Eye of the World,Robert Jordan,Fantasia,
+OL64365W,Brave New World,Aldous Huxley,Ficção científica,
+OL76837W,The Da Vinci Code,Dan Brown,Mistério,
+OL627084W,Lolita,Vladimir Nabokov,Ficção literária,1955
+OL468431W,The Great Gatsby,F. Scott Fitzgerald,Ficção literária,1925
+OL20018811W,November 9,Colleen Hoover,Romance,
+OL675783W,The Handmaid's Tale,Margaret Atwood,Ficção científica,
+OL455327W,Lord of the Flies,William Golding,Ficção literária,
+OL19667762W,If He Had Been With Me,Laura Nowlin,Romance,
+OL262421W,The Adventures of Sherlock Holmes [12 stories],Arthur Conan Doyle,Mistério,
+OL81634W,Misery,Stephen King,Terror,1987
+OL362427W,Romeo and Juliet,William Shakespeare,Ficção literária,
+OL45846W,Matilda,Roald Dahl,Infantil,
+OL81626W,Carrie,Stephen King,Terror,
+OL679358W,Coraline,Neil Gaiman,Fantasia,
+OL29983W,Little Women,Louisa May Alcott,Ficção literária,1868
+OL45790W,Charlie and the Chocolate Factory,Roald Dahl,Infantil,
+OL1846076W,The Giver,Lois Lowry,Ficção científica,
+OL5819456W,The Book Thief,Markus Zusak,Ficção literária,2005
+OL85892W,Dracula,Bram Stoker,Terror,
+OL1892617W,A Brief History of Time,Stephen Hawking,Não ficção,
+OL875437W,The Perks of Being a Wallflower,Stephen Chbosky,Ficção literária,
+OL23535656W,Culpa mía,Mercedes Ron,Romance,
+OL17797857W,One Of Us Is Lying,Karen M. McManus,Mistério,2017
+OL17732W,Bible,Bible,Não ficção,
+OL18766691W,Where the Crawdads Sing,Delia Owens,Ficção literária,
+OL266178W,Het Achterhuis,Anne Frank,Biografia,1947
+OL81631W,Pet Sematary,Stephen King,Terror,
+OL27448W,The Lord of the Rings,J.R.R. Tolkien,Fantasia,
+OL450063W,"Frankenstein; or, The Modern Prometheus",Mary Shelley,Terror,
+OL2163649W,The Hitchhiker's Guide to the Galaxy,Douglas Adams,Ficção científica,
+OL5682519W,Dog Days,Jeff Kinney,Infantil,2009
+OL20808172W,Punk 57,Penelope Douglas,Romance,
+OL471565W,And Then There Were None,Agatha Christie,Mistério,
+OL27513W,The Fellowship of the Ring,J.R.R. Tolkien,Fantasia,
+OL17332479W,Six of Crows,Leigh Bardugo,Fantasia,
+OL1037811W,Wings of Fire,A. P. J. Abdul Kalam,Biografia,
+OL15401200W,The Lost Hero,Rick Riordan,Fantasia,
+OL63073W,The Old Man and the Sea,Ernest Hemingway,Ficção literária,
+OL239940W,कामसूत्र,Vatsyāyana,Não ficção,
+OL138052W,Alice's Adventures in Wonderland,Lewis Carroll,Fantasia,
+OL6027236W,The Maze Runner,James Dashner,Ficção científica,
+OL20965973W,The Midnight Library,Matt Haig,Fantasia,
+OL17606111W,Milk and Honey,Rupi Kaur,Ficção literária,
+OL8193416W,The Picture of Dorian Gray,Oscar Wilde,Ficção literária,
+OL23204W,Of Mice and Men,John Steinbeck,Ficção literária,
+OL20019347W,コーヒーが冷めないうちに,川口俊和,Fantasia,
+OL19713513W,They Both Die at the End,Adam Silvera,Romance,
+OL17203233W,To All the Boys I've Loved Before,Jenny Han,Romance,
+OL5735360W,Catching Fire,Suzanne Collins,Ficção científica,
+OL492646W,The Sea of Monsters,Rick Riordan,Fantasia,2006
+OL1089297W,The Prince,Niccolò Machiavelli,Não ficção,1532
+OL16085155W,Steve Jobs,Walter Isaacson,Biografia,
+OL274505W,Cien años de soledad,Gabriel García Márquez,Ficção literária,
+OL102749W,Moby Dick,Herman Melville,Ficção literária,
+OL15719630W,Divergent,Veronica Roth,Ficção científica,2011
+OL16607146W,Throne of Glass,Sarah J. Maas,Fantasia,
+OL21084352W,"Good Girl, Bad Blood",Holly Jackson,Mistério,
+OL9170454W,Hamlet,William Shakespeare,Ficção literária,
+OL1822313W,Tuesdays with Morrie,Mitch Albom,Biografia,1997
+OL891786W,Things Fall Apart,Chinua Achebe,Ficção literária,
+OL492647W,The Titan's Curse,Rick Riordan,Fantasia,
+OL21802553W,Shatter Me Complete Collection,Tahereh Mafi,Ficção científica,
+OL18016709W,Fire & Blood,George R. R. Martin,Fantasia,2018
+OL4321141W,The Secret History,Donna Tartt,Mistério,
+OL1812933W,American Psycho,Bret Easton Ellis,Terror,
+OL52267W,The Time Machine,H. G. Wells,Ficção científica,
+OL46125W,Foundation,Isaac Asimov,Ficção científica,
+OL42430111W,The Deal,Elle Kennedy,Romance,2015
+OL17356883W,Red Queen,Victoria Aveyard,Fantasia,
+OL28353073W,Me Before You,Jojo Moyes,Romance,
+OL20150260W,Normal People,Sally Rooney,Romance,
+OL257746W,The Eyes of Darkness,Dean Koontz,Terror,
+OL1095427W,Jane Eyre,Charlotte Brontë,Romance,
+OL46241W,"I, Robot",Isaac Asimov,Ficção científica,
+OL76833W,Angels & Demons,Dan Brown,Mistério,
+OL17360811W,Harry Potter and the Cursed Child,Jack Thorne,Fantasia,2016
+OL71037W,"The Lion, the Witch and the Wardrobe",C. S. Lewis,Fantasia,
+OL471576W,Murder on the Orient Express,Agatha Christie,Mistério,1934
+OL554620W,The Duke and I,Julia Quinn,Romance,
+OL1067314W,Mein Kampf,Adolf Hitler,Não ficção,1925
+OL81629W,The Green Mile,Stephen King,Ficção literária,
+OL49488W,Ender's Game,Orson Scott Card,Ficção científica,
+OL66946W,"A child called ""it""",David J. Pelzer,Biografia,1995
+OL3902892W,Influence,Robert B. Cialdini,Não ficção,1984
+OL2965102W,The Curious Incident of the Dog in the Night-Time,Mark Haddon,Mistério,2003
+OL81632W,'Salem’s Lot,Stephen King,Terror,1975
+OL50548W,Beloved,Toni Morrison,Ficção literária,
+OL46881W,Jurassic Park,Michael Crichton,Ficção científica,
+OL17184556W,Elon Musk,Ashlee Vance,Biografia,2015
+OL24156W,The Strange Case of Dr. Jekyll and Mr. Hyde,Robert Louis Stevenson,Terror,1886
+OL8479867W,The Name of the Wind,Patrick Rothfuss,Fantasia,
+OL36287W,Le Comte de Monte-Cristo,Alexandre Dumas,Ficção literária,1844
+OL18819818W,Never Split the Difference,Chris Voss,Não ficção,
+OL15936512W,Ready Player One,Ernest Cline,Ficção científica,2011
+OL45885W,The BFG,Roald Dahl,Infantil,1982
+OL8193465W,A Tale of Two Cities,Charles Dickens,Ficção literária,1859
+OL69612W,The Secret Garden,Frances Hodgson Burnett,Infantil,
+OL21692056W,The Inheritance Games,Jennifer Lynn Barnes,Mistério,
+OL53908W,Adventures of Huckleberry Finn,Mark Twain,Ficção literária,1884
+OL492640W,The Battle of the Labyrinth,Rick Riordan,Fantasia,2008
+OL16211977W,We'll Always Have Summer,Jenny Han,Romance,
+OL19963111W,Unravel me,Tahereh Mafi,Ficção científica,
+OL5819895W,Eragon,Christopher Paolini,Fantasia,2002
+OL17267881W,三体,刘慈欣,Ficção científica,2006
+OL18417W,The Wonderful Wizard of Oz,L. Frank Baum,Fantasia,1900
+OL15980243W,The Son of Neptune,Rick Riordan,Fantasia,
+OL17864836W,Cadáver exquisito,Agustina Bazterrica,Terror,2017
+OL15270622W,The Last Olympian,Rick Riordan,Fantasia,2009
+OL5738148W,The Final Empire,Brandon Sanderson,Fantasia,2006
+OL14908941W,Mockingjay,Suzanne Collins,Ficção científica,
+OL41495W,A Wrinkle in Time,Madeleine L'Engle,Ficção científica,
+OL528094W,Autobiography of a Yogi,Yogananda Paramahansa,Biografia,
+OL98459W,Slaughterhouse-Five,Kurt Vonnegut,Ficção literária,1969
+OL81618W,The Stand,Stephen King,Terror,
+OL20716197W,The Ballad of Songbirds and Snakes,Suzanne Collins,Ficção científica,
+OL77746W,Anne of Green Gables,Lucy Maud Montgomery,Infantil,
+OL24633409W,Credence,Penelope Douglas,Romance,
+OL45809W,James and the Giant Peach,Roald Dahl,Infantil,
+OL554615W,Romancing Mister Bridgerton,Julia Quinn,Romance,
+OL1898309W,The Cat in the Hat,Dr. Seuss,Infantil,
+OL19747970W,All your perfects,Colleen Hoover,Romance,
+OL258902W,Macbeth,William Shakespeare,Ficção literária,1623
+OL45804W,Fantastic Mr Fox,Roald Dahl,Infantil,
+OL16813331W,Ignite Me,Tahereh Mafi,Ficção científica,
+OL58402W,Guess How Much I Love You,Sam McBratney,Infantil,
+OL27479W,The Two Towers,J.R.R. Tolkien,Fantasia,
+OL1737320W,I Have No Mouth and I Must Scream,Harlan Ellison,Ficção científica,1967
+OL1052133W,The God of Small Things,Arundhati Roy,Ficção literária,
+OL16239762W,Gone Girl,Gillian Flynn,Mistério,2012
+OL16821606W,All the Light We Cannot See,Anthony Doerr,Ficção literária,
+OL61982W,Ὀδύσσεια,Ὅμηρος,Ficção literária,
+OL19998163W,Confess,Colleen Hoover,Romance,
+OL81628W,The Gunslinger,Stephen King,Fantasia,1982
+OL267096W,Анна Каренина,Leo Tolstoy,Ficção literária,1878
+OL23166W,East of Eden,John Steinbeck,Ficção literária,
+OL17054790W,Percy Jackson's Greek Gods,Rick Riordan,Fantasia,2014
+OL8034526W,Call Me by Your Name,André Aciman,Romance,
+OL17091839W,The Martian,Andy Weir,Ficção científica,
+OL872932W,Siddhartha,Hermann Hesse,Ficção literária,
+OL15914981W,The Immortals of Meluha,Amish Tripathi,Fantasia,
+OL66513W,Emma,Jane Austen,Romance,
+OL18020192W,The Hired Girl,Laura Amy Schlitz,Ficção literária,
+OL1992198W,In Cold Blood,Truman Capote,Não ficção,1966
+OL17719508W,"After (After Series, Book 1)",Anna Todd,Romance,
+OL80021W,I Know Why the Caged Bird Sings,Maya Angelou,Biografia,
+OL17715454W,Caraval,Stephanie Garber,Fantasia,2017
+OL307247W,Bumi Manusia,Pramoedya Ananta Toer,Ficção literária,1980
+OL74128W,A short history of nearly everything,Bill Bryson,Não ficção,
+OL10432709W,Братья Карамазовы,Fiódor Dostoievski,Ficção literária,
+OL53919W,The Adventures of Tom Sawyer,Mark Twain,Ficção literária,1876
+OL24314065W,The Sweetest Oblivion,Danielle Lori,Romance,
+OL134834W,Flowers in the Attic,V.C. Andrews,Terror,
+OL60149W,Howl's Moving Castle,Diana Wynne Jones,Fantasia,
+OL453936W,Good Omens,Terry Pratchett,Fantasia,
+OL471509W,The A.B.C. Murders,Agatha Christie,Mistério,
+OL3261155W,Outlander,Diana Gabaldon,Romance,
+OL66562W,Sense and Sensibility,Jane Austen,Romance,
+OL455305W,The Scarlet Letter,Nathaniel Hawthorne,Ficção literária,1850
+OL515754W,Flowers for Algernon,Daniel Keyes,Ficção científica,
+OL17323489W,All the Bright Places,Jennifer Niven,Romance,2015
+OL16664287W,The Mark of Athena,Rick Riordan,Fantasia,2012
+OL38663W,Heart of Darkness,Joseph Conrad,Ficção literária,
+OL24034W,Treasure Island,Robert Louis Stevenson,Ficção literária,1883
+OL17823218W,A Court of Wings and Ruin,Sarah J. Maas,Fantasia,
+OL17793648W,The Silver Eyes (Five Nights At Freddy's #1),Scott Cawthon,Terror,2016
+OL35223328W,Married at first sight,Gu Lingfei,Romance,
+OL5720027W,New Moon,Stephenie Meyer,Romance,
+OL9264548W,Thirteen reasons why,Jay Asher,Ficção literária,
+OL40873W,The Road,Cormac McCarthy,Ficção científica,
+OL8721462W,Great Expectations,Charles Dickens,Ficção literária,
+OL2625457W,Norwegian Wood,村上春樹,Ficção literária,
+OL261794W,A Clockwork Orange,Anthony Burgess,Ficção científica,
+OL1846074W,Number the Stars,Lois Lowry,Ficção literária,1989
+OL8756330W,Smile,Raina Telgemeier,Biografia,
+OL8455255W,City of Bones,Cassandra Clare,Fantasia,
+OL27495W,The Silmarillion,J.R.R. Tolkien,Fantasia,
+OL20824826W,A Thousand Boy Kisses,Tillie Cole,Romance,
+OL3946622W,Gorin no sho,Miyamoto Musashi,Não ficção,
+OL77826W,Interview With the Vampire,Anne Rice,Terror,1976
+OL16361029W,The Selection (The Selection #1),Kiera Cass,Romance,
+OL15358691W,The Way of Kings,Brandon Sanderson,Fantasia,
+OL28988W,Northern Lights,Philip Pullman,Fantasia,
+OL265501W,Into the Wild,Erin Hunter,Fantasia,
+OL2056818W,Maus I,Art Spiegelman,Biografia,
+OL20893778W,Corrupt,Penelope Douglas,Romance,
+OL20032935W,The Hating Game,Sally Thorne,Romance,
+OL21025633W,Записки изъ подполья,Fiódor Dostoievski,Ficção literária,
+OL81591W,The Bachman Books (Long Walk / Rage / Roadwork / Running Man),Stephen King,Terror,
+OL16807730W,House of Hades,Rick Riordan,Fantasia,
+OL695408W,Leonardo,Leonardo da Vinci,Não ficção,
+OL20354499W,"Heartstopper, Volume 2",Alice Oseman,Romance,
+OL922430W,Sofies verden,Jostein Gaarder,Ficção literária,
+OL32195W,House of Leaves,Mark Z. Danielewski,Terror,2000
+OL2568879W,Where the Wild Things Are,Maurice Sendak,Infantil,
+OL17076473W,Red Rising,Pierce Brown,Ficção científica,
+OL18012166W,Circe,Madeline Miller,Fantasia,
+OL17059943W,The Blood of Olympus,Rick Riordan,Fantasia,2014
+OL276558W,"Guns, Germs, and Steel",Jared Diamond,História,
+OL17356252W,When Breath Becomes Air,Paul Kalanithi,Biografia,
+OL25434351W,Heated Rivalry,Rachel Reid,Romance,
+OL471932W,The Murder of Roger Ackroyd,Agatha Christie,Mistério,
+OL8193478W,Oliver Twist,Charles Dickens,Ficção literária,1838
+OL36633W,Rebecca,Daphne du Maurier,Mistério,
+OL45886W,The Witches,Roald Dahl,Infantil,
+OL2625431W,海辺のカフカ,村上春樹,Ficção literária,2002
+OL20669844W,Archer's Voice,Mia Sheridan,Romance,
+OL5720025W,Eclipse,Stephenie Meyer,Romance,2007
+OL17356811W,P.S. I Still Love You,Jenny Han,Romance,2015
+OL59798W,A Wizard of Earthsea,Ursula K. Le Guin,Fantasia,
+OL21775531W,Destroy Me,Tahereh Mafi,Ficção científica,
+OL1673205W,The Godfather,Mario Puzo,Mistério,
+OL498463W,Der Proceß,Franz Kafka,Ficção literária,1925
+OL15728986W,Diary of an Oxygen Thief,Anonymous,Ficção literária,
+OL157040W,Forbidden knowledge,Roger Shattuck,Não ficção,
+OL32466W,A Christmas Carol,Charles Dickens,Ficção literária,
+OL1063588W,Les Misérables,Victor Hugo,Ficção literária,
+OL20564687W,Hopeless,Colleen Hoover,Romance,
+OL259010W,A Midsummer Night's Dream,William Shakespeare,Ficção literária,
+OL2172356W,Do Androids Dream of Electric Sheep?,Philip K. Dick,Ficção científica,
+OL81603W,Insomnia,Stephen King,Terror,
+OL27258W,Neuromancer,William Gibson,Ficção científica,
+OL1230715W,La Peste,Albert Camus,Ficção literária,1947
+OL10834W,Das Parfum,Patrick Süskind,Ficção literária,
+OL81601W,On Writing,Stephen King,Biografia,2000
+OL16002468W,11/22/63,Stephen King,Ficção científica,2011
+OL8464993W,The Viscount Who Loved Me,Julia Quinn,Romance,
+OL24847149W,The Maddest Obsession,Danielle Lori,Romance,
+OL27455W,The Return of the King,J.R.R. Tolkien,Fantasia,1955
+OL503666W,Don Quijote de la Mancha,Miguel de Cervantes Saavedra,Ficção literária,1605
+OL629052W,Manifest der Kommunistischen Partei,Karl Marx,Não ficção,
+OL16239519W,Shadow and Bone,Leigh Bardugo,Fantasia,
+OL71042W,The Magician's Nephew,C. S. Lewis,Fantasia,
+OL5720022W,Breaking Dawn,Stephenie Meyer,Romance,2008
+OL59038W,Never Let Me Go,Kazuo Ishiguro,Ficção literária,
+OL17797130W,A Gentleman in Moscow,Amor Towles,Ficção literária,
+OL66544W,Persuasion,Jane Austen,Romance,1817
+OL262554W,"The Complete Sherlock Holmes [4 novels, 56 stories]",Arthur Conan Doyle,Mistério,
+OL61981W,Ἰλιάς,Ὅμηρος,Ficção literária,
+OL151411W,Alice's Adventures in Wonderland / Through the Looking Glass,Lewis Carroll,Fantasia,
+OL71056W,Mere Christianity,C. S. Lewis,Não ficção,1952
+OL453657W,The Colour of Magic,Terry Pratchett,Fantasia,
+OL24341413W,Our Fault,Mercedes Ron,Romance,
+OL784051W,Esperanza Rising,Pam Muñoz Ryan,Ficção literária,
+OL257939W,A Clash of Kings,George R. R. Martin,Fantasia,
+OL14942956W,The Call of the Wild,Jack London,Ficção literária,
+OL16550681W,Fifty Shades Darker,E. L. James,Romance,
+OL24153842W,All He'll Ever Be,Willow Winters,Romance,
+OL628450W,Das Kapital,Karl Marx,Não ficção,
+OL278437W,La sombra del viento,Carlos Ruiz Zafón,Mistério,

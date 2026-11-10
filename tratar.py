@@ -9,7 +9,7 @@ e grava:
     processed/livros_analise.csv   uma linha por obra (última coleta), só as
                                    conhecidas e publicadas até ANO_MAX_PUBLICACAO,
                                    com sinopse/categorias do Google Books quando houver
-    processed/livros_top.csv       lista rápida dos mais lidos por gênero, para
+    processed/livros_top.csv       lista rápida dos mais lidos por gênero principal, para
                                    conferir quais livros estão na base
 
 Uso (a partir da raiz do projeto):
@@ -54,14 +54,16 @@ def _anexar_google_books(atual):
 
 
 def _top_por_genero(atual):
-    por_genero = atual.assign(genero=atual["generos"].str.split("; ")).explode("genero")
     top = (
-        por_genero.sort_values("leitores", ascending=False)
-        .groupby("genero", group_keys=False)
+        atual.sort_values("leitores", ascending=False)
+        .groupby("genero_principal", group_keys=False)
         .head(TOP_POR_GENERO)
     )
-    colunas = ["genero", "titulo_exibicao", "titulo", "autor_principal", "ano_publicacao", "leitores", "qtd_edicoes", "nota_media", "tem_pt"]
-    return top[colunas].sort_values(["genero", "leitores"], ascending=[True, False]).reset_index(drop=True)
+    colunas = [
+        "genero_principal", "genero_fonte", "titulo_exibicao", "titulo", "autor_principal",
+        "ano_publicacao", "leitores", "qtd_edicoes", "nota_media", "tem_pt",
+    ]
+    return top[colunas].sort_values(["genero_principal", "leitores"], ascending=[True, False]).reset_index(drop=True)
 
 
 def main():
@@ -80,7 +82,7 @@ def main():
     top = _top_por_genero(atual)
     salvar_csv(top, BASE_DIR / "processed" / "livros_top.csv")
 
-    for genero, bloco in top.groupby("genero"):
+    for genero, bloco in top.groupby("genero_principal"):
         logger.info(
             "Mais lidos em %s: %s", genero,
             " | ".join(f"{t} ({a})" for t, a in bloco.head(5)[["titulo_exibicao", "autor_principal"]].itertuples(index=False)),

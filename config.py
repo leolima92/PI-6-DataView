@@ -112,6 +112,16 @@ GB_PAUSA_SEGUNDOS = 5.0       # pausa entre consultas ao Google Books
 GB_ESPERA_RETRY = 5.0         # 1ª espera após 429/5xx; dobra a cada nova falha (máx. 60s)
 GB_MAX_FALHAS_SEGUIDAS = 3    # ISBNs seguidos sem resposta antes de desistir do Google Books na rodada
 
+# GÊNERO PRINCIPAL (tratar.py)
+# Correções manuais (gênero e ano) ficam em dados/correcoes_livros.csv.
+# Para os outros livros, o gênero principal é o primeiro desta lista entre
+# os gêneros da Open Library. A ordem foi escolhida testando todas contra a
+# tabela manual (acerta 84% dos livros cujo gênero existe na Open Library).
+ORDEM_GENEROS = [
+    "Fantasia", "Biografia", "Terror", "Ficção científica",
+    "Mistério", "Romance", "História",
+]
+
 # TÍTULOS EM PORTUGUÊS (traduzir_titulos.py)
 TITULOS_MAX_POR_RODADA = 300  # obras novas consultadas por rodada (OL + Google Books)
 TITULOS_GB_MAX = 200          # dessas, quantas podem ir ao Google Books (protege a cota)
