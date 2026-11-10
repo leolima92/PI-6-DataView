@@ -14,12 +14,18 @@ conhecidas e publicadas até ANO_MAX_PUBLICACAO, compara a primeira e a
 Uso:
     python analise_perfis.py
 
-Perfis (limiares em PERCENTIL / ANO_* abaixo):
-- Clássico vivo:          antigo, muito reeditado e ainda muito lido
-- Esquecido:              antigo e muito reeditado, mas quase sem leitores hoje
-- Redescoberto / em alta: antigo e ganhando leitores rápido no período
-- Fenômeno recente:       recente, muito lido mesmo com poucas edições
-- Cauda longa:            o resto (a maioria) — pouca leitura
+Cada livro é comparado com os livros do mesmo PERÍODO de publicação
+(décadas; as antigas são juntadas até ter MIN_LIVROS_PERIODO livros): um
+livro de 1950 com 200 edições é comparado com outros de 1950, não com um
+de 2015. pct_leitores_periodo e pct_edicoes_periodo vão de 0 a 1 (posição
+do livro dentro do período).
+
+Perfis (limiares em PCT_* / ANO_* abaixo):
+- Clássico vivo:          antigo, entre os mais reeditados e mais lidos do período
+- Esquecido:              antigo, reeditado acima da mediana, mas entre os menos lidos do período
+- Redescoberto / em alta: antigo e entre os que mais ganharam leitores (por 30 dias)
+- Fenômeno recente:       recente e entre os 10% mais lidos do período
+- Estável:                o resto — conhecido, sem destaque
 
 "Leitores" = want_to_read + currently_reading + already_read.
 Nº de edições funciona como medida de relevância passada (só é reeditado o
@@ -38,19 +44,59 @@ from transform.titulos import aplicar_titulos
 
 logger = logging.getLogger(__name__)
 
-PERCENTIL = 0.90            # "muito" = top 10%
+MIN_LIVROS_PERIODO = 50     # décadas antigas são juntadas até ter isso
+PCT_ALTO = 0.75             # "entre os mais" = quartil de cima do período
+PCT_BAIXO = 0.25            # "entre os menos" = quartil de baixo do período
+PCT_FENOMENO = 0.90         # fenômeno recente: top 10% de leitores do período
+PCT_ESQUECIDO_EDICOES = 0.50  # esquecido: edições acima da mediana do período...
+                              # ...e leitores no quartil de baixo (PCT_BAIXO)
+PCT_EM_ALTA = 0.90          # top 10% de crescimento (por 30 dias)
 ANO_CLASSICO = 1976         # publicado há 50+ anos
 ANO_ANTIGO = 1996           # publicado há 30+ anos
 ANO_RECENTE = 1997          # "recente" a partir daqui
-MAX_LEITORES_ESQUECIDO = 2
-MIN_CRESCIMENTO = 0.10      # +10% de leitores no período...
-MIN_GANHO = 3               # ...e pelo menos 3 leitores novos
+MIN_GANHO = 3               # em alta: pelo menos 3 leitores novos
 
 COLUNAS_LEITORES = ["want_to_read", "currently_reading", "already_read"]
 
 
 def _leitores(df):
     return df[COLUNAS_LEITORES].fillna(0).sum(axis=1)
+
+
+def periodos(ano, minimo=MIN_LIVROS_PERIODO):
+    """
+    Agrupa os anos em períodos: cada década vira um período, mas as décadas
+    antigas (com poucos livros) são juntadas, da mais antiga para a mais
+    nova, até somar `minimo` livros. A última sobra é juntada ao anterior.
+    Devolve uma Series de rótulos ("até 1899", "1900–1929", "1950s"...).
+    """
+    decada = (ano // 10 * 10).astype("Int64")
+    contagem = decada.value_counts().sort_index()
+
+    grupos, atual, soma = [], [], 0
+    for dec, n in contagem.items():
+        atual.append(dec)
+        soma += n
+        if soma >= minimo:
+            grupos.append(atual)
+            atual, soma = [], 0
+    if atual:
+        if grupos:
+            grupos[-1].extend(atual)
+        else:
+            grupos.append(atual)
+
+    rotulos = {}
+    for i, g in enumerate(grupos):
+        ini, fim = min(g), max(g) + 9
+        if len(g) == 1:
+            rotulo = f"{ini}s"
+        elif i == 0:
+            rotulo = f"até {fim}"
+        else:
+            rotulo = f"{ini}–{fim}"
+        rotulos.update({dec: rotulo for dec in g})
+    return decada.map(rotulos)
 
 
 def classificar(hist):
@@ -81,31 +127,29 @@ def classificar(hist):
     df["crescimento_pct"] = df["ganho_leitores"] / (df["leitores_inicio"] + 5) * 100
     df["crescimento_pct_30d"] = df["crescimento_pct"] / df["dias_acompanhado"] * 30
 
-    # limiares calculados sobre as obras conhecidas da base
-    base = df
-    lim_edicoes = base["qtd_edicoes"].quantile(PERCENTIL)
-    lim_leitores = base["leitores"].quantile(PERCENTIL)
-    logger.info(
-        "Limiares (P%d): edições >= %.0f, leitores >= %.0f",
-        PERCENTIL * 100, lim_edicoes, lim_leitores,
-    )
-
+    # posição de cada livro dentro do seu período de publicação (0 a 1)
     ano = df["ano_publicacao"]
-    muito_editado = df["qtd_edicoes"] >= lim_edicoes
-    muito_lido = df["leitores"] >= lim_leitores
-    em_alta = (
-        (df["leitores_inicio"] >= 3)
-        & (df["crescimento_pct"] >= MIN_CRESCIMENTO * 100)
-        & (df["ganho_leitores"] >= MIN_GANHO)
+    df["periodo"] = periodos(ano)
+    por_periodo = df.groupby("periodo")
+    df["pct_leitores_periodo"] = por_periodo["leitores"].rank(pct=True).round(3)
+    df["pct_edicoes_periodo"] = por_periodo["qtd_edicoes"].rank(pct=True).round(3)
+
+    pl, pe = df["pct_leitores_periodo"], df["pct_edicoes_periodo"]
+    lim_crescimento = df["crescimento_pct_30d"].quantile(PCT_EM_ALTA)
+    em_alta = (df["crescimento_pct_30d"] >= lim_crescimento) & (df["ganho_leitores"] >= MIN_GANHO)
+    logger.info(
+        "Períodos: %s | em alta: crescimento >= %.1f%% em 30 dias",
+        ", ".join(f"{p} ({n})" for p, n in df["periodo"].value_counts(sort=False).sort_index().items()),
+        lim_crescimento,
     )
 
     # cada regra sobrescreve as anteriores: a última da lista tem prioridade
-    df["perfil"] = "Cauda longa"
+    df["perfil"] = "Estável"
     regras = [
-        ("Fenômeno recente", (ano >= ANO_RECENTE) & muito_lido & ~muito_editado),
+        ("Fenômeno recente", (ano >= ANO_RECENTE) & (pl >= PCT_FENOMENO)),
         ("Redescoberto / em alta", (ano <= ANO_ANTIGO) & em_alta),
-        ("Esquecido", (ano <= ANO_ANTIGO) & muito_editado & (df["leitores"] <= MAX_LEITORES_ESQUECIDO)),
-        ("Clássico vivo", (ano <= ANO_CLASSICO) & muito_lido & muito_editado),
+        ("Esquecido", (ano <= ANO_ANTIGO) & (pe >= PCT_ESQUECIDO_EDICOES) & (pl <= PCT_BAIXO)),
+        ("Clássico vivo", (ano <= ANO_CLASSICO) & (pe >= PCT_ALTO) & (pl >= PCT_ALTO)),
     ]
     for nome, mascara in regras:
         df.loc[mascara, "perfil"] = nome
@@ -115,7 +159,8 @@ def classificar(hist):
         "titulo", "autor_principal", "ano_publicacao", "idade", "generos", "qtd_edicoes",
         "nota_media", "qtd_avaliacoes", *COLUNAS_LEITORES, "leitores",
         "data_primeira_coleta", "data_coleta", "dias_acompanhado", "leitores_inicio",
-        "ganho_leitores", "crescimento_pct", "crescimento_pct_30d", "perfil",
+        "ganho_leitores", "crescimento_pct", "crescimento_pct_30d",
+        "periodo", "pct_leitores_periodo", "pct_edicoes_periodo", "perfil",
     ]
     colunas += [c for c in ("tem_pt", "amostra", "ids_agrupados") if c in df.columns]
     return df[colunas].reset_index()
