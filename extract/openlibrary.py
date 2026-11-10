@@ -3,6 +3,7 @@ Coleta paginada na Search API da Open Library.
 
 buscar_pagina  -> uma requisição, com retry/backoff
 coletar_genero -> pagina um gênero inteiro
+edicoes_da_obra -> edições de um work (para achar títulos em português)
 """
 
 import logging
@@ -17,23 +18,93 @@ from config import (
     TIMEOUT,
     MAX_RETRIES,
     SESSION,
+    ANO_MAX_PUBLICACAO,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def buscar_pagina(termo_subject, page, ordenacao="key"):
+def montar_query(termo_subject, idioma=None):
+    """Monta o q= da Search API: gênero, idioma (opcional) e corte de ano."""
+    partes = [f'subject:"{termo_subject}"']
+    if idioma:
+        partes.append(f"language:{idioma}")
+    if ANO_MAX_PUBLICACAO:
+        partes.append(f"first_publish_year:[* TO {ANO_MAX_PUBLICACAO}]")
+    return " ".join(partes)
+
+
+def _get_json(url, params, descricao):
+    """GET na Open Library com retry/backoff em 429/5xx e erros de rede."""
+    for tentativa in range(MAX_RETRIES):
+        try:
+            response = SESSION.get(url, params=params, timeout=TIMEOUT)
+        except requests.RequestException as erro:
+            espera = min(60, 2 ** tentativa)
+            logger.warning("erro de rede: %s; nova tentativa em %ss", erro, espera)
+            time.sleep(espera)
+            continue
+
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError:
+                raise RuntimeError("Open Library retornou resposta inválida em vez de JSON.")
+
+        if response.status_code in (429, 500, 502, 503, 504):
+            retry_after = response.headers.get("Retry-After")
+            try:
+                espera = float(retry_after) if retry_after else 2 ** tentativa
+            except ValueError:
+                espera = 2 ** tentativa
+            espera = min(60, espera)
+            logger.warning("HTTP %s; nova tentativa em %ss", response.status_code, espera)
+            time.sleep(espera)
+            continue
+
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+    raise RuntimeError(f"Falha após todas as tentativas ({descricao})")
+
+
+def edicoes_da_obra(id_livro, limite=200, max_paginas=5):
+    """
+    Lista as edições de um work (/works/OL...W/editions.json), paginando
+    até max_paginas. Para quando acha edições em português na página.
+    Devolve lista de dicts {"titulo", "idiomas"}.
+    """
+    url = f"https://openlibrary.org/works/{id_livro}/editions.json"
+    edicoes = []
+    for pagina in range(max_paginas):
+        dados = _get_json(url, {"limit": limite, "offset": pagina * limite}, f"edições de {id_livro}")
+        entradas = (dados or {}).get("entries") or []
+        lote = [
+            {
+                "titulo": e.get("title"),
+                "idiomas": [str(l.get("key", "")).split("/")[-1] for l in e.get("languages") or []],
+            }
+            for e in entradas
+        ]
+        edicoes.extend(lote)
+        if len(entradas) < limite or any("por" in e["idiomas"] for e in lote):
+            break
+        time.sleep(PAUSA_SEGUNDOS)
+    return edicoes
+
+
+def buscar_pagina(termo_subject, page, ordenacao="readinglog", idioma=None):
     """
     Executa uma requisição na Search API da Open Library.
 
     Possui retry/backoff para HTTP 429/500/502/503/504 e erros de conexão.
     """
     params = {
-        "q": f'subject:"{termo_subject}"',
+        "q": montar_query(termo_subject, idioma),
         "fields": FIELDS,
         "limit": LIMIT_POR_PAGINA,
         "page": page,
-        # "key" deixa a paginação determinística; ver ORDENACOES no config
+        # ver AMOSTRAS no config
         "sort": ordenacao,
     }
 
@@ -78,22 +149,30 @@ def buscar_pagina(termo_subject, page, ordenacao="key"):
         f"Falha após todas as tentativas (subject={termo_subject}, page={page})"
     )
 
-def coletar_genero(nome_genero, termo_subject, ordenacao="key", max_paginas=MAX_PAGINAS):
-    """Percorre as páginas de determinado gênero numa ordenação."""
+def coletar_genero(
+    nome_genero,
+    termo_subject,
+    ordenacao="readinglog",
+    max_paginas=MAX_PAGINAS,
+    idioma=None,
+    nome_amostra=None,
+):
+    """Percorre as páginas de determinado gênero numa ordenação (e idioma)."""
     docs = []
+    nome_amostra = nome_amostra or ordenacao
 
     for page in range(1, max_paginas + 1):
-        dados = buscar_pagina(termo_subject, page, ordenacao)
+        dados = buscar_pagina(termo_subject, page, ordenacao, idioma)
         lote = dados.get("docs", [])
 
         if not lote:
-            logger.info("%s [%s]: não existem mais resultados.", nome_genero, ordenacao)
+            logger.info("%s [%s]: não existem mais resultados.", nome_genero, nome_amostra)
             break
 
         # guarda o gênero e a ordenação da consulta em cada doc
         for doc in lote:
             doc["_genero"] = nome_genero
-            doc["_amostra"] = ordenacao
+            doc["_amostra"] = nome_amostra
 
         docs.extend(lote)
 
@@ -103,7 +182,7 @@ def coletar_genero(nome_genero, termo_subject, ordenacao="key", max_paginas=MAX_
         logger.info(
             "%s [%s]: página %s (+%d registros | acumulado %d | disponíveis %s)",
             nome_genero,
-            ordenacao,
+            nome_amostra,
             page,
             len(lote),
             len(docs),
