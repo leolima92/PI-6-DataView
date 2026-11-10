@@ -249,17 +249,23 @@ para não estourar a cota diária junto com o `merge.py`.
 ## Perfis de popularidade (`analise_perfis.py`)
 
 Para responder *por que alguns livros continuam sendo lidos décadas depois
-e outros desaparecem*, cada livro recebe um perfil. "Leitores" =
+e outros desaparecem*, cada livro conhecido recebe um perfil. "Leitores" =
 `want_to_read + currently_reading + already_read`; nº de edições mede a
 relevância passada (só é reeditado o que teve procura).
 
-| Perfil                   | Regra (limiares = top 10% das obras conhecidas)                  |
-| ------------------------ | ---------------------------------------------------------------- |
-| Clássico vivo            | Publicado até 1976, muito reeditado **e** muito lido hoje        |
-| Esquecido                | Publicado até 1996, muito reeditado, mas ≤ 2 leitores hoje       |
-| Redescoberto / em alta   | Publicado até 1996 e ganhou ≥ 10% (e ≥ 3) leitores desde a 1ª coleta |
-| Fenômeno recente         | Publicado de 1997 em diante, muito lido com poucas edições       |
-| Cauda longa              | O resto — a grande maioria, com pouca ou nenhuma leitura         |
+Cada livro é comparado com os do **mesmo período de publicação**: um livro
+de 1950 com 200 edições é comparado com outros de 1950, não com um de 2015.
+Os períodos são décadas; as antigas são juntadas até ter 50 livros
+(`até 1659`, `1660–1799`...). `pct_leitores_periodo` e `pct_edicoes_periodo`
+(0 a 1) dizem a posição do livro dentro do período.
+
+| Perfil                   | Regra                                                                   |
+| ------------------------ | ----------------------------------------------------------------------- |
+| Clássico vivo            | Até 1976, no quartil de cima do período em edições **e** em leitores    |
+| Esquecido                | Até 1996, edições acima da mediana do período, leitores no quartil de baixo |
+| Redescoberto / em alta   | Até 1996, top 10% de crescimento em 30 dias (e ≥ 3 leitores novos)      |
+| Fenômeno recente         | De 1997 em diante, top 10% de leitores do período                      |
+| Estável                  | O resto: conhecido, sem destaque                                        |
 
 Roda sozinho no fim do `run_diario.py`, depois do `tratar.py`. O
 crescimento só é calculado para livros presentes na última coleta e vistos
