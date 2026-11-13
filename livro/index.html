@@ -149,6 +149,22 @@ svg text { font-family: var(--serif); fill: var(--tinta-2); }
 .eixo line { stroke: var(--tinta-3); stroke-width: 1; }
 .grade line { stroke: #e4ddcd; stroke-width: 1; }
 .rotulo-livro { font-style: italic; fill: var(--tinta); }
+.halo { paint-order: stroke; stroke: var(--papel); stroke-width: 4px; stroke-linejoin: round; }
+.zona-graf { font-style: italic; fill: var(--tinta-3); }
+circle.pt { fill: var(--ponto); fill-opacity: .8; transition: fill .45s ease, fill-opacity .45s ease, r .45s ease; }
+circle.pt.apagado { fill-opacity: .45; }
+circle.pt.ativo { fill: var(--encadernacao); fill-opacity: .9; stroke: var(--papel); stroke-width: .8; }
+.mediana { stroke: var(--tinta); stroke-width: 2; fill: none; }
+.rotulo-mediana { fill: var(--tinta); font-variant-caps: all-small-caps; letter-spacing: .05em; }
+.dica {
+  position: absolute; z-index: 9; pointer-events: none; max-width: 30%;
+  background: var(--tinta); color: var(--papel); border-radius: 3px; padding: .55em .75em;
+  font-size: clamp(11px, 1.05vw, 15px); line-height: 1.3; display: grid; gap: .15em;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+.dica b { font-weight: 600; font-style: italic; }
+.dica .linhas { display: flex; gap: 1em; font-variant-numeric: lining-nums tabular-nums; }
+.dica .perfil { color: #c9b98f; font-size: .92em; }
 .linha-rotulo { stroke: var(--tinta-2); stroke-width: .8; fill: none; }
 
 /* tabela do apêndice */
@@ -160,7 +176,8 @@ ol.notas { margin: 0; padding-left: 1.2em; display: grid; gap: 1.1cqh; font-size
 ol.notas li::marker { color: var(--encadernacao); font-weight: 600; }
 
 /* ---------- controles ---------- */
-.zona { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 6; cursor: pointer; background: none; border: 0; }
+.zona { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 6; background: none; border: 0; pointer-events: none; }
+.livro { cursor: pointer; }
 .zona.ant { left: 0; cursor: w-resize; }
 .zona.prox { right: 0; cursor: e-resize; }
 .zona:focus-visible { outline: 2px solid #c9b98f; outline-offset: -6px; }
@@ -186,6 +203,7 @@ ol.notas li::marker { color: var(--encadernacao); font-weight: 600; }
 }
 @media (prefers-reduced-motion: reduce) {
   .folha.vira, .folha.volta { animation-duration: .01s; }
+  circle.pt { transition: none; }
   .passo, .fita { transition: none; }
 }
 </style>
@@ -195,6 +213,7 @@ ol.notas li::marker { color: var(--encadernacao); font-weight: 600; }
   <div class="pagina esq" id="esq"></div>
   <div class="pagina dir" id="dir"></div>
   <div class="fita" id="fita" aria-hidden="true"></div>
+  <div class="dica" id="dica" role="tooltip" hidden></div>
   <button class="zona ant" id="ant" aria-label="Voltar"></button>
   <button class="zona prox" id="prox" aria-label="Avançar"></button>
 </div>
@@ -241,64 +260,122 @@ function el(nome, attrs, pai) {
 }
 const log = Math.log10;
 
-function dispersao(svg, opcoes) {
-  const {destaque = null, rotulos = [], compacto = false} = opcoes;
+// espalhamento leve e fixo (o mesmo a cada abertura) para desfazer as colunas
+// de livros com 1, 2, 3... edições ou leitores, que se empilhariam no mesmo ponto
+function sorte(id, sal) {
+  let h = 2166136261 ^ sal;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 10000) / 10000 - .5;
+}
+function espalha(v, id, sal) {
+  const base = log(Math.max(v, 1));
+  const passoLog = v < 1 ? .3 : log((Math.max(v, 1) + 1) / Math.max(v, 1));   // distância até o próximo inteiro
+  const amp = Math.min(.12, passoLog * .8);
+  return base + sorte(id, sal) * amp - (v < 1 ? .16 : 0);                     // 0 leitores fica logo abaixo do 1
+}
+LIVROS.forEach(l => { l.lx = espalha(l.edicoes, l.id, 7); l.ly = espalha(l.leitores, l.id, 13); });
+
+function montarDispersao(svg, compacto) {
   const caixa = svg.getBoundingClientRect();
   const W = caixa.width, H = caixa.height;
-  const fs = compacto ? H * 0.06 : H * 0.034;
-  const m = compacto ? {t: fs * .4, r: fs * .4, b: fs * 1.6, l: fs * 2.6} : {t: fs, r: fs * 1.2, b: fs * 3.2, l: fs * 4.6};
+  const fs = compacto ? Math.max(9, H * .062) : H * .034;
+  const m = compacto ? {t: fs * .5, r: fs * .5, b: fs * 1.7, l: fs * 3.1} : {t: fs * .8, r: fs * 1.2, b: fs * 3.2, l: fs * 4.6};
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = "";
-  const X = v => m.l + (log(Math.max(v, 1)) / 4) * (W - m.l - m.r);       // 1 a 10.000 edições
-  const Y = v => H - m.b - (log(Math.max(v, 1)) / 5) * (H - m.t - m.b);   // 1 a 100.000 leitores
-
-  const grade = el("g", {class: "grade"}, svg);
-  const eixo = el("g", {class: "eixo"}, svg);
-  const tx = compacto ? [1, 100, 10000] : [1, 10, 100, 1000, 10000];
-  const ty = compacto ? [1, 100, 10000] : [1, 10, 100, 1000, 10000, 100000];
-  tx.forEach(v => {
-    el("line", {x1: X(v), x2: X(v), y1: m.t, y2: H - m.b}, grade);
-    el("text", {x: X(v), y: H - m.b + fs * 1.3, "text-anchor": "middle", "font-size": fs}, eixo).textContent = fmt(v);
+  const X = lv => m.l + (lv / 4) * (W - m.l - m.r);            // log10 de 1 a 10.000 edições
+  const Y = lv => H - m.b - ((lv + .25) / 5.25) * (H - m.t - m.b); // log10 de ~0,5 a 100.000 leitores
+  const grade = el("g", {class: "grade"}, svg), eixo = el("g", {class: "eixo"}, svg);
+  (compacto ? [0, 2, 4] : [0, 1, 2, 3, 4]).forEach(e => {
+    el("line", {x1: X(e), x2: X(e), y1: m.t, y2: H - m.b}, grade);
+    el("text", {x: X(e), y: H - m.b + fs * 1.3, "text-anchor": "middle", "font-size": fs}, eixo).textContent = fmt(10 ** e);
   });
-  ty.forEach(v => {
-    el("line", {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v)}, grade);
-    el("text", {x: m.l - fs * .5, y: Y(v) + fs * .35, "text-anchor": "end", "font-size": fs}, eixo).textContent = fmt(v);
+  (compacto ? [0, 2, 4] : [0, 1, 2, 3, 4, 5]).forEach(e => {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(e), y2: Y(e)}, grade);
+    el("text", {x: m.l - fs * .5, y: Y(e) + fs * .35, "text-anchor": "end", "font-size": fs}, eixo).textContent = fmt(10 ** e);
   });
   el("line", {x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b}, eixo);
   if (!compacto) {
     el("text", {x: (m.l + W - m.r) / 2, y: H - fs * .4, "text-anchor": "middle", "font-size": fs * 1.05, "font-style": "italic"}, eixo)
       .textContent = "edições publicadas →";
-    const ty2 = el("text", {x: 0, y: 0, "text-anchor": "middle", "font-size": fs * 1.05, "font-style": "italic",
-      transform: `translate(${fs * 1.1} ${(m.t + H - m.b) / 2}) rotate(-90)`}, eixo);
-    ty2.textContent = "leitores hoje →";
+    el("text", {x: 0, y: 0, "text-anchor": "middle", "font-size": fs * 1.05, "font-style": "italic",
+      transform: `translate(${fs * 1.1} ${(m.t + H - m.b) / 2}) rotate(-90)`}, eixo).textContent = "leitores hoje →";
+    // nomes das regiões do gráfico
+    const z = {class: "zona-graf", "font-size": fs * .95};
+    el("text", {...z, x: X(.08), y: Y(4.92)}, svg).textContent = "lido, pouco reeditado";
+    el("text", {...z, x: X(3.95), y: Y(-.05), "text-anchor": "end"}, svg).textContent = "reeditado, pouco lido hoje";
   }
-
-  const r = compacto ? Math.max(1.2, H * .0075) : Math.max(1.6, H * .0058);
-  const fundo = el("g", {}, svg), frente = el("g", {}, svg);
-  LIVROS.forEach(l => {
-    const ativo = destaque !== null && l.perfil === destaque;
-    el("circle", {
-      cx: X(l.edicoes), cy: Y(l.leitores), r: ativo ? r * 1.25 : r,
-      fill: ativo ? "var(--encadernacao)" : "var(--ponto)",
-      "fill-opacity": ativo ? .85 : (destaque === null ? .85 : .55),
-      stroke: ativo ? "var(--papel)" : "none", "stroke-width": ativo ? .8 : 0
-    }, ativo ? frente : fundo);
+  const r = compacto ? Math.max(1.3, H * .008) : Math.max(1.7, H * .0058);
+  const gPts = el("g", {}, svg);
+  const pts = LIVROS.map(l => {
+    const c = el("circle", {class: "pt", cx: X(l.lx), cy: Y(l.ly), style: `r:${r}px`}, gPts);
+    c._livro = l; return c;
   });
+  const gExtra = el("g", {}, svg);
+  svg._ctx = {W, H, fs, m, r, X, Y, pts, gPts, gExtra, compacto, destaque: undefined};
+  ligarDica(svg);
+  return svg._ctx;
+}
 
-  // rótulos: [id, dx, dy] em múltiplos do tamanho da fonte
+function destacar(svg, perfil, rotulos = []) {
+  const c = svg._ctx;
+  c.destaque = perfil;
+  c.pts.forEach(pt => {
+    const ativo = perfil !== null && pt._livro.perfil === perfil;
+    pt.classList.toggle("ativo", ativo);
+    pt.classList.toggle("apagado", perfil !== null && !ativo);
+    pt.style.r = (ativo ? c.r * 1.3 : c.r) + "px";
+    if (ativo) c.gPts.appendChild(pt);   // os do perfil ficam por cima
+  });
+  c.gExtra.innerHTML = "";
+  const {X, Y, fs} = c;
+  if (perfil !== null) {                 // mediana do perfil
+    const md = D.resumo[perfil];
+    const mx = X(log(Math.max(md.mediana_edicoes, 1))), my = Y(log(Math.max(md.mediana_leitores, 1)));
+    const t = fs * (c.compacto ? .55 : .7);
+    el("path", {class: "mediana", d: `M${mx - t} ${my}H${mx + t}M${mx} ${my - t}V${my + t}`}, c.gExtra);
+    if (!c.compacto) {
+      const tx = el("text", {class: "halo rotulo-mediana", x: mx + t * 1.4, y: my + fs * 1.5, "font-size": fs * .9}, c.gExtra);
+      tx.textContent = "mediana";
+    }
+  }
   rotulos.forEach(([id, dx, dy, ancora = "start"]) => {
     const l = L[id]; if (!l) return;
-    const x = X(l.edicoes), y = Y(l.leitores);
-    const lx = x + dx * fs, ly = y + dy * fs;
-    el("circle", {cx: x, cy: y, r: r * 2.1, fill: "none", stroke: "var(--tinta)", "stroke-width": 1}, svg);
-    el("path", {class: "linha-rotulo", d: `M${x} ${y} L${lx} ${ly}`}, svg);
-    const t = el("text", {class: "rotulo-livro", x: lx + (ancora === "end" ? -fs * .3 : fs * .3), y: ly + fs * .35,
-      "text-anchor": ancora, "font-size": fs * 1.1}, svg);
+    const x = X(l.lx), y = Y(l.ly), lx = x + dx * fs, ly = y + dy * fs;
+    el("circle", {cx: x, cy: y, r: c.r * 2.3, fill: "none", stroke: "var(--tinta)", "stroke-width": 1}, c.gExtra);
+    el("path", {class: "linha-rotulo", d: `M${x} ${y} L${lx} ${ly}`}, c.gExtra);
+    const t = el("text", {class: "rotulo-livro halo", x: lx + (ancora === "end" ? -fs * .3 : fs * .3), y: ly + fs * .35,
+      "text-anchor": ancora, "font-size": fs * 1.1}, c.gExtra);
     t.textContent = ROTULO[id] || l.titulo;
     const larg = t.getComputedTextLength();
-    if (ancora === "start" && lx + fs * .3 + larg > W) { t.setAttribute("text-anchor", "end"); t.setAttribute("x", W); t.setAttribute("y", ly - fs * .5); }
-    if (ancora === "end" && lx - fs * .3 - larg < m.l) { t.setAttribute("text-anchor", "start"); t.setAttribute("x", m.l + fs * .3); t.setAttribute("y", ly - fs * .5); }
+    if (ancora === "start" && lx + fs * .3 + larg > c.W) { t.setAttribute("text-anchor", "end"); t.setAttribute("x", c.W); t.setAttribute("y", ly - fs * .5); }
+    if (ancora === "end" && lx - fs * .3 - larg < c.m.l) { t.setAttribute("text-anchor", "start"); t.setAttribute("x", c.m.l + fs * .3); t.setAttribute("y", ly - fs * .5); }
   });
+}
+
+// dica ao passar o mouse: o ponto mais próximo do cursor, dentro de um raio generoso
+function ligarDica(svg) {
+  const dica = document.getElementById("dica");
+  svg.addEventListener("pointermove", e => {
+    const c = svg._ctx, cx = svg.getBoundingClientRect();
+    const px = (e.clientX - cx.left) * (c.W / cx.width), py = (e.clientY - cx.top) * (c.H / cx.height);
+    let melhor = null, dist = (c.compacto ? 10 : 14) ** 2;
+    for (const pt of c.pts) {
+      if (c.destaque !== null && c.destaque !== undefined && pt._livro.perfil !== c.destaque) continue;
+      const dx = +pt.getAttribute("cx") - px, dy = +pt.getAttribute("cy") - py, d = dx * dx + dy * dy;
+      if (d < dist) { dist = d; melhor = pt; }
+    }
+    if (!melhor) { dica.hidden = true; return; }
+    const l = melhor._livro, caixaLivro = $livro.getBoundingClientRect();
+    dica.innerHTML = `<b>${ROTULO[l.id] || l.titulo}</b><span>${l.autor}${l.ano ? ", " + l.ano : ""}</span>
+      <span class="linhas"><span>${fmt(l.edicoes)} edições</span><span>${fmt(l.leitores)} leitores</span></span>
+      <span class="perfil">${PERFIS[l.perfil]}${l.genero ? " · " + l.genero : ""}</span>`;
+    dica.hidden = false;
+    const x = e.clientX - caixaLivro.left, y = e.clientY - caixaLivro.top;
+    const esquerda = x > caixaLivro.width * .7;
+    dica.style.left = (esquerda ? x - dica.offsetWidth - 14 : x + 14) + "px";
+    dica.style.top = Math.max(4, y - dica.offsetHeight - 10) + "px";
+  });
+  svg.addEventListener("pointerleave", () => { dica.hidden = true; });
 }
 
 /* ---------------- capa: estante dos clássicos vivos ---------------- */
@@ -423,9 +500,9 @@ const SPREADS = [
             <figcaption style="font-size:2.5cqh"><span style="font-family:var(--serif-display);font-weight:600;font-size:1.15em">${PERFIS[i].replace(" / em alta", "")}</span> <span style="color:var(--tinta-2)">· ${fmt(D.resumo[i].livros)}</span></figcaption>
             <div style="flex:1;min-height:0"><svg class="grafico" id="mini${i}" role="img" aria-label="${PERFIS[i]}: ${D.resumo[i].livros} livros"></svg></div>
           </figure>`).join("")}
-        <p class="legenda" style="grid-column:1/-1;position:absolute;bottom:-5.5cqh">Fig. 2 · Mesmo gráfico da figura 1, um perfil por painel.</p>
+        <p class="legenda" style="grid-column:1/-1;position:absolute;bottom:-5.5cqh">Fig. 2 · Mesmo gráfico da figura 1, um perfil por painel. A cruz marca a mediana do perfil.</p>
       </div>`, folio: pagina("cap3") + 5}),
-    depois: () => [0, 1, 2, 3].forEach(i => dispersao(document.getElementById("mini" + i), {destaque: i, compacto: true}))
+    depois: () => [0, 1, 2, 3].forEach(i => { const g = document.getElementById("mini" + i); montarDispersao(g, true); destacar(g, i); })
   },
   { // 5 apêndice: tabelas
     nome: "apendice",
@@ -512,8 +589,9 @@ function textoPasso(p) {
     <p class="nota" style="border:0;font-style:italic">${p + 1} de ${PASSOS.length}${p < PASSOS.length - 1 ? " · avance para o próximo destino" : ""}</p>`;
 }
 function passoGrafico(p) {
-  const s = PASSOS[p];
-  dispersao(document.getElementById("disp"), {destaque: s.perfil, rotulos: s.rotulos});
+  const s = PASSOS[p], g = document.getElementById("disp");
+  if (!g._ctx) montarDispersao(g, false);
+  destacar(g, s.perfil, s.rotulos);
   document.getElementById("legenda-passo").textContent = s.legenda;
 }
 
@@ -528,7 +606,10 @@ function preencher(div, conteudo, lado) {
   div.innerHTML = (conteudo.cabeco ? `<div class="cabeco">${conteudo.cabeco}</div>` : "") + conteudo.html +
     (conteudo.folio !== undefined ? `<div class="folio">${conteudo.folio}</div>` : "");
 }
+const esconderDica = () => { document.getElementById("dica").hidden = true; };
+document.addEventListener("pointermove", e => { if (!e.target.closest || !e.target.closest("svg.grafico")) esconderDica(); });
 function desenhar() {
+  esconderDica();
   const s = SPREADS[atual];
   preencher($esq, s.esq(passo), "esq");
   preencher($dir, s.dir(passo), "dir");
@@ -590,6 +671,7 @@ function voltar() {
   virar(-1);
 }
 function atualizarPasso() {
+  esconderDica();
   const s = SPREADS[atual];
   document.getElementById("texto-passo").innerHTML = textoPasso(passo);
   s.depois(passo);
@@ -599,14 +681,16 @@ function irPara(i) {
   atual = i; passo = 0; lado = "esq"; desenhar();
 }
 
-// as zonas de clique cobrem as páginas; um link do sumário embaixo delas tem prioridade
-function clicar(e, acao) {
-  const alvo = document.elementsFromPoint(e.clientX, e.clientY).map(n => n.closest && n.closest("[data-ir]")).find(Boolean);
-  if (alvo) { irPara(SPREADS.findIndex(s => s.nome === alvo.dataset.ir)); return; }
-  acao();
-}
-document.getElementById("prox").addEventListener("click", e => clicar(e, avancar));
-document.getElementById("ant").addEventListener("click", e => clicar(e, voltar));
+// clique na metade direita avança, na esquerda volta; links do sumário têm prioridade.
+// Os botões .zona ficam só para o teclado e leitores de tela, sem tapar os gráficos.
+$livro.addEventListener("click", e => {
+  const alvo = e.target.closest("[data-ir]");
+  if (alvo) return;
+  const caixa = $livro.getBoundingClientRect();
+  (e.clientX - caixa.left > caixa.width / 2 ? avancar : voltar)();
+});
+document.getElementById("prox").addEventListener("click", e => { e.stopPropagation(); avancar(); });
+document.getElementById("ant").addEventListener("click", e => { e.stopPropagation(); voltar(); });
 document.addEventListener("keydown", e => {
   if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); avancar(); }
   else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); voltar(); }
