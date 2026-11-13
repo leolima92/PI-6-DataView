@@ -24,9 +24,8 @@ import logging
 import time
 from collections import Counter
 
-import pandas as pd
 
-from config import (
+from booktrends.config import (
     BASE_DIR,
     GB_MAX_FALHAS_SEGUIDAS,
     GB_PAUSA_SEGUNDOS,
@@ -34,9 +33,9 @@ from config import (
     TITULOS_GB_MAX,
     TITULOS_MAX_POR_RODADA,
 )
-from extract.googlebooks import GoogleBooksIndisponivel, buscar_edicoes_pt
-from extract.openlibrary import edicoes_da_obra
-from transform.tratamento import _texto_normalizado
+from booktrends.extract.googlebooks import GoogleBooksIndisponivel, buscar_edicoes_pt
+from booktrends.extract.openlibrary import edicoes_da_obra
+from booktrends.utils.texto import normalizar_texto
 
 logger = logging.getLogger(__name__)
 
@@ -60,14 +59,14 @@ def escolher_titulo_ol(edicoes):
     if not titulos:
         return None
     # conta pela forma normalizada, devolve a grafia mais comum dessa forma
-    contagem = Counter(_texto_normalizado(t) or t.lower() for t in titulos)
+    contagem = Counter(normalizar_texto(t) or t.lower() for t in titulos)
     vencedor = contagem.most_common(1)[0][0]
-    grafias = Counter(t for t in titulos if (_texto_normalizado(t) or t.lower()) == vencedor)
+    grafias = Counter(t for t in titulos if (normalizar_texto(t) or t.lower()) == vencedor)
     return grafias.most_common(1)[0][0]
 
 
 def _sobrenome(autor):
-    partes = _texto_normalizado(autor).split()
+    partes = normalizar_texto(autor).split()
     return partes[-1] if partes else ""
 
 
@@ -76,7 +75,7 @@ def escolher_titulo_gb(volumes, autor):
     sobrenome = _sobrenome(autor)
     for volume in volumes:
         autores = " ".join(volume.get("authors") or [])
-        if sobrenome and sobrenome in _texto_normalizado(autores).split():
+        if sobrenome and sobrenome in normalizar_texto(autores).split():
             titulo = _limpar_titulo(volume.get("title"))
             if titulo:
                 return titulo

@@ -1,4 +1,8 @@
-"""Funções de apoio usadas na transformação dos dados."""
+"""Funções de apoio para texto e campos da Open Library."""
+
+import re
+import unicodedata
+
 def primeiro(valor):
     """
     Open Library retorna vários campos como lista.
@@ -34,3 +38,18 @@ def escolher_isbn(isbns):
             return str(isbn)
 
     return str(isbns[0])
+
+
+def normalizar_texto(valor):
+    """Minúsculas, sem acento, sem subtítulo/parênteses e sem pontuação."""
+    if not isinstance(valor, str) or not valor.strip():
+        return ""
+    texto = unicodedata.normalize("NFKD", valor)
+    texto = "".join(c for c in texto if not unicodedata.combining(c)).lower()
+    # "(Lord of the Isles 2)" e subtítulo saem, mas só se sobrarem 2+
+    # palavras: "Novels (Black House / Talisman)" não pode virar "novels"
+    curto = re.sub(r"[\(\[].*?[\)\]]", " ", texto).split(":")[0]
+    if len(re.findall(r"[a-z0-9]+", curto)) >= 2:
+        texto = curto
+    texto = re.sub(r"[^a-z0-9]+", " ", texto)
+    return " ".join(texto.split())

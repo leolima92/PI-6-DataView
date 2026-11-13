@@ -6,13 +6,13 @@ idade (anos desde a publicação), calcula a fração dos livros que continuam
 "vivos", ou seja, com pelo menos LIMIAR_VIVO leitores hoje (por padrão, a
 mediana de leitores da base).
 
-Lê  processed/perfis_livros.csv  (gerado por analise_perfis.py) e grava:
+Lê  processed/perfis_livros.csv  (gerado por etapas/perfis.py) e grava:
 
     processed/sobrevivencia.csv                     tabela gênero × faixa de idade
     analise/graficos/sobrevivencia_por_genero.png   um painel por gênero
 
 Uso (a partir da raiz do projeto):
-    python analise_sobrevivencia.py
+    python -m booktrends.etapas.sobrevivencia
 
 Cuidado ao interpretar (viés de sobrevivência): a base só tem livros que
 foram relevantes em algum momento (ver MIN_LEITORES / MIN_EDICOES no
@@ -25,9 +25,9 @@ import logging
 
 import pandas as pd
 
-from config import BASE_DIR, FAIXAS_IDADE, LIMIAR_VIVO, MIN_LIVROS_PONTO
-from load.csv_writer import salvar_csv
-from logging_setup import configurar_logging
+from booktrends.config import BASE_DIR, FAIXAS_IDADE, LIMIAR_VIVO, MIN_LIVROS_PONTO
+from booktrends.load.csv_writer import salvar_csv
+from booktrends.logging_setup import configurar_logging
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ def desenhar(tabela, caminho):
 def main():
     entrada = BASE_DIR / "processed" / "perfis_livros.csv"
     if not entrada.exists():
-        logger.error("Não encontrei %s. Rode 'python analise_perfis.py' primeiro.", entrada)
+        logger.error("Não encontrei %s. Rode 'python -m booktrends.etapas.perfis' primeiro.", entrada)
         return
 
     perfis = pd.read_csv(entrada, encoding="utf-8-sig", low_memory=False)

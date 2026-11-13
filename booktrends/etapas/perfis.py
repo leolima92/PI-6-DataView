@@ -4,7 +4,7 @@ Classifica cada livro num perfil de popularidade ao longo do tempo.
 Pergunta do projeto: por que alguns livros continuam sendo lidos décadas
 depois de publicados, enquanto outros desaparecem do interesse dos leitores?
 
-Lê historico/livros_tratado.csv (gerado por tratar.py), usa só as obras
+Lê historico/livros_tratado.csv (gerado por etapas/tratar.py), usa só as obras
 conhecidas e publicadas até ANO_MAX_PUBLICACAO, compara a primeira e a
 última coleta de cada livro e grava:
 
@@ -12,7 +12,7 @@ conhecidas e publicadas até ANO_MAX_PUBLICACAO, compara a primeira e a
     analise/AAAA-MM/perfis_AAAA-MM-DD.csv     (cópia datada, por mês)
 
 Uso:
-    python analise_perfis.py
+    python -m booktrends.etapas.perfis
 
 Cada livro é comparado com os livros do mesmo PERÍODO de publicação
 (décadas; as antigas são juntadas até ter MIN_LIVROS_PERIODO livros): um
@@ -37,10 +37,10 @@ import logging
 
 import pandas as pd
 
-from config import BASE_DIR, pasta_do_mes
-from load.csv_writer import salvar_csv
-from logging_setup import configurar_logging
-from transform.titulos import aplicar_titulos
+from booktrends.config import BASE_DIR, pasta_do_mes
+from booktrends.load.csv_writer import salvar_csv
+from booktrends.logging_setup import configurar_logging
+from booktrends.transform.titulos import aplicar_titulos
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def classificar(hist):
 def main():
     entrada = BASE_DIR / "historico" / "livros_tratado.csv"
     if not entrada.exists():
-        logger.error("Não encontrei %s. Rode 'python tratar.py' primeiro.", entrada)
+        logger.error("Não encontrei %s. Rode 'python -m booktrends.etapas.tratar' primeiro.", entrada)
         return
 
     hist = pd.read_csv(entrada, encoding="utf-8-sig", low_memory=False)

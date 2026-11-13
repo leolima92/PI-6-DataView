@@ -5,7 +5,7 @@ Antes, tudo ficava direto em raw/, historico/ e logs/. Agora cada mês tem
 sua pasta (raw/AAAA-MM/, historico/AAAA-MM/, logs/AAAA-MM/). Rode uma vez
 para arrumar o que já existe:
 
-    python organizar_pastas.py
+    python scripts/organizar_pastas.py
 
 Nada é apagado sem antes estar copiado no destino:
 - raw:       se o arquivo já existir no destino, o antigo fica onde está;
@@ -20,12 +20,17 @@ de historico/, porque juntam todos os meses.
 import logging
 import re
 import shutil
+import sys
+from pathlib import Path
 
 import pandas as pd
 
-from config import BASE_DIR
-from load.csv_writer import salvar_historico
-from logging_setup import configurar_logging
+# permite rodar "python scripts/organizar_pastas.py" a partir da raiz
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from booktrends.config import BASE_DIR
+from booktrends.load.csv_writer import salvar_historico
+from booktrends.logging_setup import configurar_logging
 
 logger = logging.getLogger(__name__)
 

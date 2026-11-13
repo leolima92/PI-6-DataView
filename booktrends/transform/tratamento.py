@@ -16,40 +16,23 @@ leitores, avaliações e edições são somados e o ano é o menor entre elas.
 """
 
 import logging
-import re
-import unicodedata
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from config import ANO_MAX_PUBLICACAO, MIN_EDICOES, MIN_LEITORES, ORDEM_GENEROS
+from booktrends.config import ANO_MAX_PUBLICACAO, DADOS_DIR, MIN_EDICOES, MIN_LEITORES, ORDEM_GENEROS
+from booktrends.utils.texto import normalizar_texto
 
 logger = logging.getLogger(__name__)
 
 COLUNAS_LEITORES = ["want_to_read", "currently_reading", "already_read"]
-CORRECOES_PATH = Path(__file__).resolve().parents[1] / "dados" / "correcoes_livros.csv"
+CORRECOES_PATH = DADOS_DIR / "correcoes_livros.csv"
 COLUNAS_INTEIRAS = [
     "ano_publicacao", "paginas", "qtd_avaliacoes", "qtd_edicoes",
     *COLUNAS_LEITORES, "cover_id",
 ]
 # somadas quando works duplicados viram uma obra só
 COLUNAS_SOMA = ["qtd_avaliacoes", "qtd_edicoes", *COLUNAS_LEITORES]
-
-
-def _texto_normalizado(valor):
-    """Minúsculas, sem acento, sem subtítulo/parênteses e sem pontuação."""
-    if not isinstance(valor, str) or not valor.strip():
-        return ""
-    texto = unicodedata.normalize("NFKD", valor)
-    texto = "".join(c for c in texto if not unicodedata.combining(c)).lower()
-    # "(Lord of the Isles 2)" e subtítulo saem, mas só se sobrarem 2+
-    # palavras: "Novels (Black House / Talisman)" não pode virar "novels"
-    curto = re.sub(r"[\(\[].*?[\)\]]", " ", texto).split(":")[0]
-    if len(re.findall(r"[a-z0-9]+", curto)) >= 2:
-        texto = curto
-    texto = re.sub(r"[^a-z0-9]+", " ", texto)
-    return " ".join(texto.split())
 
 
 def autor_principal(autor):
@@ -61,8 +44,8 @@ def autor_principal(autor):
 
 def chave_obra(df):
     """Título + 1º autor normalizados. Sem autor, a chave é o próprio ID."""
-    titulo = df["titulo"].map(_texto_normalizado)
-    autor = df["autor_principal"].map(_texto_normalizado)
+    titulo = df["titulo"].map(normalizar_texto)
+    autor = df["autor_principal"].map(normalizar_texto)
     chave = titulo + "|" + autor
     sem_chave = (titulo == "") | (autor == "")
     return chave.where(~sem_chave, "id|" + df["id_livro"])

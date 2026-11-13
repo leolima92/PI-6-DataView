@@ -15,7 +15,7 @@ tudo em CSV, pronto para visualizar em Power BI, Python ou Tableau.
 
 ```text
 Open Library (search.json)
-        │  GET paginado por gênero × amostra (readinglog, readinglog_pt), até 2020
+        │  etapas/coletar.py: GET paginado por gênero × amostra (readinglog, readinglog_pt), até 2020
         ▼
    JSON bruto  ──►  raw/AAAA-MM/openlibrary_AAAA-MM-DD.csv
         │  normalização
@@ -25,24 +25,24 @@ Open Library (search.json)
         │  histórico
         ▼
    historico/AAAA-MM/livros_AAAA-MM.csv   (snapshots do mês)
-        │  merge Google Books (merge.py)
+        │  etapas/merge.py (merge Google Books)
         ▼
    processed/livros_merged.csv                    (foto mais recente + gb_*)
    historico/AAAA-MM/livros_merged_AAAA-MM.csv    (histórico + gb_*)
-        │  consolidar_historico.py (junta todos os meses)
+        │  etapas/consolidar.py (junta todos os meses)
         ▼
    historico/livros_consolidado.csv
    historico/livros_merged_consolidado.csv
-        │  tratar.py (limpa, junta works duplicados, marca os conhecidos)
+        │  etapas/tratar.py (limpa, junta works duplicados, marca os conhecidos)
         ▼
    historico/livros_tratado.csv  +  processed/livros_analise.csv  +  processed/livros_top.csv
-        │  traduzir_titulos.py (título da edição em português, com cache)
+        │  etapas/traduzir_titulos.py (título da edição em português, com cache)
         ▼
    processed/livros_analise.csv  (+ titulo_exibicao, titulo_pt, titulo_pt_fonte)
-        │  analise_perfis.py (classifica cada livro conhecido)
+        │  etapas/perfis.py (classifica cada livro conhecido)
         ▼
    processed/perfis_livros.csv  +  analise/AAAA-MM/perfis_AAAA-MM-DD.csv
-        │  analise_sobrevivencia.py (curva de sobrevivência por gênero)
+        │  etapas/sobrevivencia.py (curva de sobrevivência por gênero)
         ▼
    processed/sobrevivencia.csv  +  analise/graficos/sobrevivencia_por_genero.png
         │
@@ -60,7 +60,7 @@ que juntam todos os meses.
 Se você já tinha arquivos soltos do formato antigo, rode uma vez:
 
 ```bash
-python organizar_pastas.py
+python scripts/organizar_pastas.py
 ```
 
 Ele move cada arquivo para a pasta do mês certo. Nada se perde: se o
@@ -72,55 +72,84 @@ anexado; um `raw` do mesmo dia é mantido no lugar com um aviso.
 ## Estrutura do projeto
 
 ```text
-book-trends/
-├── coletar.py                    # ponto de entrada: python coletar.py
-└── booktrends/                   # pacote com o pipeline
-    ├── config.py                 # constantes, gêneros, campos, sessão HTTP
-    ├── common/
-    │   └── utils.py              # primeiro, lista_para_texto, escolher_isbn
-    ├── extract/
-    │   └── openlibrary.py        # buscar_pagina, coletar_genero      (EXTRACT)
-    ├── transform/
-    │   └── normalizar.py         # normalizar, preparar_dados         (TRANSFORM)
-    ├── load/
-    │   └── csv_writer.py         # salvar_csv, salvar_historico       (LOAD)
-    └── pipeline.py               # orquestra extract → transform → load
+PI-6-DataView/
+├── run_diario.py                 # rotina completa (é o que o agendador roda)
+├── requirements.txt
+├── booktrends/                   # o código do pipeline
+│   ├── config.py                 # tudo que costuma mudar (gêneros, limites, pastas)
+│   ├── logging_setup.py          # log no console + arquivo datado
+│   ├── utils/texto.py            # normalização de texto, ISBN, listas → texto
+│   ├── extract/                  # EXTRACT: chamadas às APIs
+│   │   ├── openlibrary.py        #   busca paginada, edições de um work
+│   │   └── googlebooks.py        #   busca por ISBN e por título em pt
+│   ├── transform/                # TRANSFORM: regras sobre os dados
+│   │   ├── normalizar.py         #   JSON da Open Library → esquema do projeto
+│   │   ├── merge_google_books.py #   junta os campos gb_* (com cache)
+│   │   ├── tratamento.py         #   limpeza, duplicados, gênero principal, flags
+│   │   └── titulos.py            #   títulos em português (com cache)
+│   ├── load/
+│   │   └── csv_writer.py         # LOAD: grava CSV e histórico sem duplicar
+│   └── etapas/                   # cada etapa da rotina, com seu main()
+│       ├── coletar.py            #   1. coleta da Open Library
+│       ├── merge.py              #   2. merge com o Google Books
+│       ├── consolidar.py         #   3. junta os meses do histórico
+│       ├── tratar.py             #   4. base tratada para análise
+│       ├── traduzir_titulos.py   #   5. títulos em português
+│       ├── perfis.py             #   6. perfis de popularidade
+│       └── sobrevivencia.py      #   7. curva de sobrevivência
+├── dados/correcoes_livros.csv    # correções manuais (versionadas)
+├── docs/                         # imagens do README
+└── scripts/
+    ├── run_daily.ps1             # wrapper do Agendador de Tarefas do Windows
+    └── organizar_pastas.py       # migração única do formato antigo de pastas
 ```
 
-Cada estágio do ETL é uma pasta. Para mexer em algo, você vai direto ao lugar:
-
-| Quero mudar…                          | Arquivo                        |
-| ------------------------------------- | ------------------------------ |
-| Gêneros, pasta de saída, e-mail, ritmo | `booktrends/config.py`         |
-| Paginação / rate limit / requisições  | `booktrends/extract/openlibrary.py` |
-| Esquema, limpeza, junções             | `booktrends/transform/normalizar.py` |
-| Formato/gravação dos CSVs             | `booktrends/load/csv_writer.py` |
+| Quero mudar…                           | Arquivo                                  |
+| -------------------------------------- | ---------------------------------------- |
+| Gêneros, limites, pasta de saída, ritmo | `booktrends/config.py`                   |
+| Paginação / rate limit / requisições   | `booktrends/extract/openlibrary.py`      |
+| Esquema dos dados coletados            | `booktrends/transform/normalizar.py`     |
+| Limpeza, duplicados, gênero principal  | `booktrends/transform/tratamento.py`     |
+| Gênero ou ano de um livro específico   | `dados/correcoes_livros.csv`             |
+| Regras dos perfis                      | `booktrends/etapas/perfis.py`            |
+| Gravação dos CSVs                      | `booktrends/load/csv_writer.py`          |
 
 ---
 
 ## Requisitos
 
 - Python 3.9+
-- Bibliotecas:
-
-```bash
-pip install requests pandas
-```
+- Bibliotecas: `pip install -r requirements.txt`
+  (requests, pandas, python-dotenv, matplotlib)
 
 ---
 
 ## Como rodar
 
-A partir da pasta que contém `coletar.py`:
+Sempre a partir da raiz do repositório.
+
+Rotina completa (coleta → merge → consolidação → tratamento → títulos →
+perfis → curva), que é o que o agendador roda:
 
 ```bash
-python coletar.py
+python run_diario.py
 ```
 
-Os arquivos são gravados dentro da pasta definida em `BASE_DIR`
-(`booktrends/config.py`). As subpastas `raw/`, `processed/` e `historico/`
-são criadas automaticamente. Aponte `BASE_DIR` para a pasta sincronizada
-com o Google Drive se quiser subir a base direto.
+Uma etapa sozinha:
+
+```bash
+python -m booktrends.etapas.coletar
+python -m booktrends.etapas.merge
+python -m booktrends.etapas.consolidar
+python -m booktrends.etapas.tratar
+python -m booktrends.etapas.traduzir_titulos
+python -m booktrends.etapas.perfis
+python -m booktrends.etapas.sobrevivencia
+```
+
+Os arquivos são gravados na pasta `BOOK_TRENDS_DIR` do `.env` (ex.:
+`BOOK_TRENDS_DIR=G:/Meu Drive/book-trends`) ou, sem ela, em `./data`. As
+subpastas `raw/`, `processed/`, `historico/` etc. são criadas sozinhas.
 
 ---
 
@@ -148,12 +177,12 @@ Tudo que costuma mudar está em `booktrends/config.py`:
 | `raw/AAAA-MM/openlibrary_AAAA-MM-DD.csv` | Resposta bruta da API (para auditoria)                 |
 | `processed/livros.csv`           | Uma linha por livro, no esquema do projeto (foto mais recente) |
 | `processed/livros_generos.csv`   | Relação livro × gênero (um livro pode ter vários gêneros)      |
-| `processed/livros_merged.csv`    | `livros.csv` enriquecido com os campos `gb_*` do Google Books (foto mais recente, gerado por `merge.py`) |
+| `processed/livros_merged.csv`    | `livros.csv` enriquecido com os campos `gb_*` do Google Books (foto mais recente, gerado por `etapas/merge.py`) |
 | `historico/AAAA-MM/livros_AAAA-MM.csv` | Snapshots do mês — é o que permite estudar a tendência   |
-| `historico/AAAA-MM/livros_merged_AAAA-MM.csv` | Mesmo histórico acumulado, já com os campos `gb_*` (gerado por `merge.py`) |
-| `historico/livros_consolidado.csv` | **Todos os meses juntos num único arquivo** — aponte o Power BI para este (gerado por `consolidar_historico.py`) |
+| `historico/AAAA-MM/livros_merged_AAAA-MM.csv` | Mesmo histórico acumulado, já com os campos `gb_*` (gerado por `etapas/merge.py`) |
+| `historico/livros_consolidado.csv` | **Todos os meses juntos num único arquivo** — aponte o Power BI para este (gerado por `etapas/consolidar.py`) |
 | `historico/livros_merged_consolidado.csv` | Mesma coisa, já com os campos `gb_*`                     |
-| `processed/perfis_livros.csv`    | Um livro por linha com o **perfil de popularidade** (gerado por `analise_perfis.py`) |
+| `processed/perfis_livros.csv`    | Um livro por linha com o **perfil de popularidade** (gerado por `etapas/perfis.py`) |
 | `analise/AAAA-MM/perfis_AAAA-MM-DD.csv` | Cópia datada dos perfis, guardada por mês             |
 | `logs/AAAA-MM/coleta_AAAA-MM-DD.log` | Log de cada execução                                     |
 
@@ -190,7 +219,7 @@ rode em datas diferentes — a série temporal se forma pela combinação
 ## Amostragem (`AMOSTRAS`)
 
 A Search API devolve os resultados numa ordem e só pagina até certo ponto.
-Cada amostra em `config.py` define ordenação, idioma e nº de páginas por gênero:
+Cada amostra em `booktrends/config.py` define ordenação, idioma e nº de páginas por gênero:
 
 | Amostra         | O que traz                                             |
 | --------------- | ------------------------------------------------------ |
@@ -201,15 +230,15 @@ Todas filtram `first_publish_year` até `ANO_MAX_PUBLICACAO` (2020).
 
 Até nov/2026 a amostra principal era `key` (IDs mais antigos da Open
 Library), que trazia sobretudo livros obscuros: metade da base tinha 0
-leitores. O histórico antigo continua lá; o `tratar.py` filtra os livros
+leitores. O histórico antigo continua lá; o `etapas/tratar.py` filtra os livros
 desconhecidos na hora da análise.
 
 ---
 
-## Tratamento (`tratar.py`)
+## Tratamento (`etapas/tratar.py`)
 
 Lê `historico/livros_consolidado.csv` e aplica as regras de
-`transform/tratamento.py`:
+`booktrends/transform/tratamento.py`:
 
 - descarta IDs que não são de obra (`...M`, de edição);
 - ano impossível (0, 9183...) vira vazio; tipos inteiros (`Int64`);
@@ -231,7 +260,7 @@ conferir a base).
 ## Gênero principal e correções manuais
 
 Os gêneros da coleta vêm das tags (`subject`) da Open Library, que erram
-muito (Harry Potter vinha como História e Mistério). O `tratar.py` cria:
+muito (Harry Potter vinha como História e Mistério). O `etapas/tratar.py` cria:
 
 - `genero_principal`: um gênero por obra;
 - `genero_fonte`: `manual` (da tabela) ou `automatico` (pela regra).
@@ -246,7 +275,7 @@ Além dos 7 gêneros da coleta, a tabela usa três que não existem nas tags:
 **Ficção literária**, **Não ficção** e **Infantil**.
 
 Para os outros livros, o gênero principal é o primeiro da `ORDEM_GENEROS`
-(`config.py`) entre os da Open Library. A ordem foi escolhida testando
+(`booktrends/config.py`) entre os da Open Library. A ordem foi escolhida testando
 todas as combinações contra a tabela manual: acerta 84% dos livros cujo
 gênero existe na Open Library. O ponto fraco é "História", que nos livros
 populares costuma ser ficção literária ou não ficção: para análises
@@ -254,11 +283,11 @@ finas, filtre `genero_fonte == "manual"` ou amplie a tabela.
 
 ---
 
-## Títulos em português (`traduzir_titulos.py`)
+## Títulos em português (`etapas/traduzir_titulos.py`)
 
 Sem tradução automática: título traduzido ao pé da letra sai errado
 (*Nineteen Eighty-Four* é *1984* no Brasil). O título vem de uma edição
-real em português (`transform/titulos.py`):
+real em português (`booktrends/transform/titulos.py`):
 
 1. **Open Library**: edições do próprio work em `por`; fica o título mais
    frequente entre elas (só obras com `tem_pt`).
@@ -271,11 +300,11 @@ Colunas: `titulo_exibicao` (use esta nos gráficos), `titulo_pt` e
 ficam em `cache/titulos_pt.json`, então cada obra é consultada uma vez.
 Cada rodada consulta até `TITULOS_MAX_POR_RODADA` obras (das mais lidas
 para as menos lidas), e no máximo `TITULOS_GB_MAX` delas no Google Books,
-para não estourar a cota diária junto com o `merge.py`.
+para não estourar a cota diária junto com o `etapas/merge.py`.
 
 ---
 
-## Perfis de popularidade (`analise_perfis.py`)
+## Perfis de popularidade (`etapas/perfis.py`)
 
 Para responder *por que alguns livros continuam sendo lidos décadas depois
 e outros desaparecem*, cada livro conhecido recebe um perfil. "Leitores" =
@@ -296,14 +325,14 @@ Os períodos são décadas; as antigas são juntadas até ter 50 livros
 | Fenômeno recente         | De 1997 em diante, top 10% de leitores do período                      |
 | Estável                  | O resto: conhecido, sem destaque                                        |
 
-Roda sozinho no fim do `run_diario.py`, depois do `tratar.py`. O
+Roda sozinho no fim do `run_diario.py`, depois do `etapas/tratar.py`. O
 crescimento só é calculado para livros presentes na última coleta e vistos
 em 2+ datas (`dias_acompanhado`); `crescimento_pct_30d` normaliza por mês.
 O perfil "Redescoberto" fica mais confiável quanto mais meses de histórico houver.
 
 ---
 
-## Curva de sobrevivência (`analise_sobrevivencia.py`)
+## Curva de sobrevivência (`etapas/sobrevivencia.py`)
 
 *Quanto tempo um livro continua sendo lido?* Para cada faixa de idade
 (`FAIXAS_IDADE`, anos desde a publicação) e cada gênero principal, calcula
@@ -332,7 +361,7 @@ continuam no CSV.
 ## Observações importantes
 
 - **User-Agent obrigatório.** A Open Library bloqueia coleta anônima. O
-  `CONTACT_EMAIL` no `config.py` vira o `User-Agent` das requisições.
+  `CONTACT_EMAIL` no `booktrends/config.py` vira o `User-Agent` das requisições.
 - **Campos de popularidade só vêm se pedir.** `ratings_*`,
   `want_to_read_count`, `currently_reading_count` e `already_read_count` só
   aparecem porque estão listados em `FIELDS`. Sem isso, essas colunas viriam
