@@ -2,13 +2,13 @@
 Configuração central de logging do Book Trends.
 
 Chame ``configurar_logging()`` uma única vez, no início da execução
-(``run_diario.py``, ``coletar.py`` ou ``merge.py``). A partir daí todo
+(``run_diario.py`` ou o ``main`` de uma etapa). A partir daí todo
 módulo usa ``logging.getLogger(__name__)`` e a saída vai para:
 
 - o console (stdout);
 - um arquivo datado em ``<BASE_DIR>/logs/AAAA-MM/coleta_AAAA-MM-DD.log``.
 
-``BASE_DIR`` vem do ``config`` (por padrão ``G:/Meu Drive/book-trends``),
+``BASE_DIR`` vem do ``config`` (``BOOK_TRENDS_DIR`` do ``.env``, ou ``./data``),
 então o log fica na mesma pasta dos CSVs. Rodar de novo no mesmo dia
 acrescenta no mesmo arquivo, sem apagar o que já estava lá.
 """
@@ -19,7 +19,7 @@ import datetime as dt
 import logging
 from pathlib import Path
 
-from config import BASE_DIR
+from booktrends.config import BASE_DIR, REPO_DIR
 
 _FORMATO = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _DATA_HORA = "%Y-%m-%d %H:%M:%S"
@@ -36,7 +36,7 @@ def _pasta_de_logs() -> Path:
         alvo.mkdir(parents=True, exist_ok=True)
         return alvo
     except OSError:
-        alvo = Path(__file__).resolve().parent / "logs" / mes
+        alvo = REPO_DIR / "logs" / mes
         alvo.mkdir(parents=True, exist_ok=True)
         return alvo
 

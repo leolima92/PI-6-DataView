@@ -15,7 +15,7 @@ import logging
 import random
 import time
 import requests
-from config import (
+from booktrends.config import (
     GOOGLE_BOOKS_URL,
     GOOGLE_BOOKS_API_KEY,
     GB_ESPERA_RETRY,

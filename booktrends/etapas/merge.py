@@ -1,7 +1,7 @@
 """
 Combina a base coletada com dados do Google Books (merge por ISBN).
 Uso (a partir da raiz do projeto), DEPOIS de rodar a coleta:
-    python merge.py
+    python -m booktrends.etapas.merge
 Lê  processed/livros.csv  e gera  processed/livros_merged.csv (snapshot,
 sobrescrito a cada rodada), acrescentando as colunas gb_* (sinopse,
 categorias, nota, etc.), e acumula em
@@ -13,15 +13,13 @@ import logging
 import os
 
 import pandas as pd
-from dotenv import load_dotenv
-from config import BASE_DIR, pasta_do_mes
-from logging_setup import configurar_logging
-from load.csv_writer import salvar_historico
-from transform.google_books import merge
+from booktrends.config import BASE_DIR, pasta_do_mes
+from booktrends.logging_setup import configurar_logging
+from booktrends.load.csv_writer import salvar_historico
+from booktrends.transform.merge_google_books import merge
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
 
 
 def main():
@@ -35,7 +33,7 @@ def main():
 
     entrada = BASE_DIR / "processed" / "livros.csv"
     if not entrada.exists():
-        logger.error("Não encontrei %s. Rode 'python coletar.py' primeiro.", entrada)
+        logger.error("Não encontrei %s. Rode 'python -m booktrends.etapas.coletar' primeiro.", entrada)
         return
 
     df = pd.read_csv(entrada, encoding="utf-8-sig")

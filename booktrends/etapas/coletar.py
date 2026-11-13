@@ -1,13 +1,21 @@
+"""
+Coleta da Open Library (etapa EXTRACT + TRANSFORM + LOAD do dia).
+
+Uso (a partir da raiz do projeto):
+    python -m booktrends.etapas.coletar
+"""
+
 import logging
 import time
 import datetime as dt
 import pandas as pd
 import requests
-from config import BASE_DIR, GENEROS, AMOSTRAS, AMOSTRA_PRINCIPAL, PAUSA_SEGUNDOS, pasta_do_mes
-from helpers import lista_para_texto
-from extract.openlibrary import coletar_genero
-from transform.normalizar import preparar_dados
-from load.csv_writer import salvar_csv, salvar_historico
+from booktrends.logging_setup import configurar_logging
+from booktrends.config import BASE_DIR, GENEROS, AMOSTRAS, AMOSTRA_PRINCIPAL, PAUSA_SEGUNDOS, pasta_do_mes
+from booktrends.utils.texto import lista_para_texto
+from booktrends.extract.openlibrary import coletar_genero
+from booktrends.transform.normalizar import preparar_dados
+from booktrends.load.csv_writer import salvar_csv, salvar_historico
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +70,8 @@ def main():
     logger.info("Relações livro/gênero: %d", len(df_generos))
     logger.info("Registros brutos: %d", len(df_raw))
     logger.info("Arquivos gerados em: %s", BASE_DIR.resolve())
+
+
+if __name__ == "__main__":
+    configurar_logging()
+    main()

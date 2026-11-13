@@ -13,7 +13,7 @@ Nenhum arquivo mensal é apagado ou sobrescrito — a consolidação só lê e
 gera esses dois arquivos extras. Rode sempre que quiser atualizar a base
 que alimenta o BI (ex.: no fim de run_diario.py, ou manualmente):
 
-    python consolidar_historico.py
+    python -m booktrends.etapas.consolidar
 """
 
 import logging
@@ -21,8 +21,8 @@ import re
 
 import pandas as pd
 
-from config import BASE_DIR
-from logging_setup import configurar_logging
+from booktrends.config import BASE_DIR
+from booktrends.logging_setup import configurar_logging
 
 logger = logging.getLogger(__name__)
 

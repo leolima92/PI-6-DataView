@@ -9,7 +9,7 @@ edicoes_da_obra -> edições de um work (para achar títulos em português)
 import logging
 import time
 import requests
-from config import (
+from booktrends.config import (
     URL,
     FIELDS,
     LIMIT_POR_PAGINA,

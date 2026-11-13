@@ -17,14 +17,14 @@ import datetime as dt
 import logging
 import sys
 
-from logging_setup import configurar_logging
-from pipeline import main as coletar
-from merge import main as merge_google_books
-from consolidar_historico import main as consolidar_historico
-from tratar import main as tratar_dados
-from traduzir_titulos import main as traduzir_titulos
-from analise_perfis import main as analisar_perfis
-from analise_sobrevivencia import main as curva_sobrevivencia
+from booktrends.logging_setup import configurar_logging
+from booktrends.etapas.coletar import main as coletar
+from booktrends.etapas.merge import main as merge_google_books
+from booktrends.etapas.consolidar import main as consolidar_historico
+from booktrends.etapas.tratar import main as tratar_dados
+from booktrends.etapas.traduzir_titulos import main as traduzir_titulos
+from booktrends.etapas.perfis import main as analisar_perfis
+from booktrends.etapas.sobrevivencia import main as curva_sobrevivencia
 
 logger = logging.getLogger(__name__)
 

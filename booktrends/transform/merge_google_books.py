@@ -11,7 +11,7 @@ Regras (para respeitar a cota da API do Google Books):
 Os campos gb_* são majoritariamente atributos estáticos do livro (sinopse,
 categorias etc.), mas o resultado do merge é gravado tanto no snapshot
 (processed/livros_merged.csv) quanto no histórico acumulado
-(historico/livros_merged_{AAAA-MM}.csv, ver merge.py), para manter também
+(historico/livros_merged_{AAAA-MM}.csv, ver etapas/merge.py), para manter também
 a série temporal de nota/avaliações junto com os campos gb_*.
 """
 
@@ -19,8 +19,8 @@ import json
 import logging
 import time
 import pandas as pd
-from config import BASE_DIR, GB_MAX_LIVROS, GB_PAUSA_SEGUNDOS, GB_MAX_FALHAS_SEGUIDAS
-from extract.googlebooks import (
+from booktrends.config import BASE_DIR, GB_MAX_LIVROS, GB_PAUSA_SEGUNDOS, GB_MAX_FALHAS_SEGUIDAS
+from booktrends.extract.googlebooks import (
     GoogleBooksIndisponivel,
     buscar_por_isbn,
     campos_google,

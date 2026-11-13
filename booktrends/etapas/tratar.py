@@ -1,7 +1,7 @@
 """
 Trata o histórico consolidado e gera a base para visualização.
 
-Lê  historico/livros_consolidado.csv  (gerado por consolidar_historico.py)
+Lê  historico/livros_consolidado.csv  (gerado por etapas/consolidar.py)
 e grava:
 
     historico/livros_tratado.csv   série completa limpa e sem works duplicados,
@@ -13,7 +13,7 @@ e grava:
                                    conferir quais livros estão na base
 
 Uso (a partir da raiz do projeto):
-    python tratar.py
+    python -m booktrends.etapas.tratar
 
 Ver transform/tratamento.py para as regras.
 """
@@ -22,11 +22,11 @@ import logging
 
 import pandas as pd
 
-from config import BASE_DIR
-from load.csv_writer import salvar_csv
-from logging_setup import configurar_logging
-from transform.titulos import aplicar_titulos
-from transform.tratamento import tratar
+from booktrends.config import BASE_DIR
+from booktrends.load.csv_writer import salvar_csv
+from booktrends.logging_setup import configurar_logging
+from booktrends.transform.titulos import aplicar_titulos
+from booktrends.transform.tratamento import tratar
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def _top_por_genero(atual):
 def main():
     entrada = BASE_DIR / "historico" / "livros_consolidado.csv"
     if not entrada.exists():
-        logger.error("Não encontrei %s. Rode 'python consolidar_historico.py' primeiro.", entrada)
+        logger.error("Não encontrei %s. Rode 'python -m booktrends.etapas.consolidar' primeiro.", entrada)
         return
 
     hist = pd.read_csv(entrada, encoding="utf-8-sig", low_memory=False)
