@@ -2,7 +2,12 @@
 Junta (merge) dados do Google Books na base de livros, por ISBN.
 Regras (para respeitar a cota da API do Google Books):
 - só consulta livros que têm ISBN;
-- prioriza os mais populares (want_to_read) e limita a GB_MAX_LIVROS por rodada;
+- a fila de consultas começa pelos livros conhecidos da base de análise (a
+  lista de prioridade, dos mais lidos para os menos lidos) e segue pelos
+  outros, dos mais desejados (want_to_read) para os menos;
+- GB_MAX_LIVROS limita só as consultas NOVAS da rodada: o que já está no
+  cache é aplicado a todos os livros sem contar no limite, então a
+  cobertura cresce a cada dia em vez de repetir os mesmos livros;
 - guarda um cache em disco, então ISBNs já buscados não são reconsultados;
 - falha da API (503 etc.) não entra no cache, então o ISBN é tentado de novo
   na próxima rodada; "não encontrado" entra, marcado com _nao_encontrado;
@@ -56,24 +61,40 @@ def _salvar_cache(cache):
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
 
-def merge(df_livros):
-    """Recebe a tabela de livros (Open Library) e devolve uma cópia com
-    as colunas gb_* preenchidas para os livros consultados."""
-    cache = _carregar_cache()
-
-    # só livros com ISBN, priorizando os mais populares
+def ordenar_fila(df_livros, prioridade=None):
+    """
+    Livros com ISBN na ordem em que devem ser consultados: primeiro os da
+    lista de prioridade (na ordem dela), depois os outros, dos mais
+    desejados (want_to_read) para os menos.
+    """
     com_isbn = df_livros[df_livros["isbn"].notna()].copy()
-    if "want_to_read" in com_isbn.columns:
-        com_isbn = com_isbn.sort_values(
-            "want_to_read", ascending=False, na_position="last"
-        )
-    alvos = com_isbn.head(GB_MAX_LIVROS)
+    posicao = {id_livro: i for i, id_livro in enumerate(prioridade or [])}
+    com_isbn["_prioridade"] = com_isbn["id_livro"].map(posicao)
+    com_isbn["_desejo"] = com_isbn["want_to_read"] if "want_to_read" in com_isbn.columns else 0
+    com_isbn = com_isbn.sort_values(
+        ["_prioridade", "_desejo"], ascending=[True, False], na_position="last"
+    )
+    return com_isbn.drop(columns=["_prioridade", "_desejo"])
+
+
+def merge(df_livros, prioridade=None):
+    """
+    Recebe a tabela de livros (Open Library) e devolve uma cópia com as
+    colunas gb_* preenchidas para os livros que já estão no cache ou que
+    foram consultados nesta rodada.
+
+    prioridade: IDs a consultar primeiro (ex.: os livros conhecidos da base
+    de análise, dos mais lidos para os menos lidos).
+    """
+    cache = _carregar_cache()
+    alvos = ordenar_fila(df_livros, prioridade)
+    na_prioridade = alvos["id_livro"].isin(set(prioridade or []))
 
     logger.info(
-        "Consultando o Google Books para %d livros "
-        "(de %d no total; limite GB_MAX_LIVROS=%d)",
+        "Google Books: %d livros com ISBN (%d da lista de prioridade); "
+        "até %d consultas novas nesta rodada (GB_MAX_LIVROS)",
         len(alvos),
-        len(df_livros),
+        int(na_prioridade.sum()),
         GB_MAX_LIVROS,
     )
 
@@ -92,7 +113,8 @@ def merge(df_livros):
             do_cache += 1
             continue
 
-        if interrompido:
+        # o limite vale só para consultas novas; o cache continua sendo aplicado
+        if interrompido or consultas_novas >= GB_MAX_LIVROS:
             continue
 
         try:
@@ -130,6 +152,13 @@ def merge(df_livros):
         falhas,
         " (interrompido)" if interrompido else "",
     )
+    if prioridade:
+        cobertos = sum(1 for i in set(prioridade) if por_livro.get(i) and not por_livro[i].get("_nao_encontrado"))
+        pendentes = sum(1 for i in alvos.loc[na_prioridade, "isbn"].astype(str) if not _no_cache(cache, i))
+        logger.info(
+            "Livros da lista de prioridade: %d com dados do Google Books, %d ainda sem consulta",
+            cobertos, pendentes,
+        )
 
     # remove as marcas internas (ex.: _nao_encontrado) antes de virar coluna
     por_livro = {

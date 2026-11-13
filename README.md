@@ -283,6 +283,22 @@ finas, filtre `genero_fonte == "manual"` ou amplie a tabela.
 
 ---
 
+## Google Books (`etapas/merge.py`)
+
+Enriquece os livros com sinopse, categorias, nota e páginas do Google Books,
+consultando por ISBN. Cada ISBN é consultado uma vez só e guardado em
+`cache/googlebooks.json`.
+
+- A fila começa pelos **livros conhecidos** de `processed/livros_analise.csv`
+  (da rodada anterior), dos mais lidos para os menos lidos, e só depois
+  segue pelos outros livros da coleta, dos mais desejados para os menos.
+- `GB_MAX_LIVROS` (500) limita só as **consultas novas** de cada rodada. O
+  que já está no cache é aplicado a todos os livros sem contar no limite,
+  então a cobertura cresce todo dia.
+- O log mostra quantos livros conhecidos já têm dados e quantos faltam.
+
+---
+
 ## Títulos em português (`etapas/traduzir_titulos.py`)
 
 Sem tradução automática: título traduzido ao pé da letra sai errado

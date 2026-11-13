@@ -6,6 +6,10 @@ Lê  processed/livros.csv  e gera  processed/livros_merged.csv (snapshot,
 sobrescrito a cada rodada), acrescentando as colunas gb_* (sinopse,
 categorias, nota, etc.), e acumula em
 historico/AAAA-MM/livros_merged_AAAA-MM.csv para manter série histórica.
+
+A fila de consultas começa pelos livros conhecidos de
+processed/livros_analise.csv (da rodada anterior), dos mais lidos para os
+menos lidos; ver transform/merge_google_books.py.
 """
 
 import datetime as dt
@@ -20,6 +24,27 @@ from booktrends.transform.merge_google_books import merge
 
 logger = logging.getLogger(__name__)
 
+
+
+def carregar_prioridade():
+    """
+    IDs dos livros conhecidos da última base de análise (etapas/tratar.py),
+    dos mais lidos para os menos lidos, incluindo os works duplicados que
+    foram juntados em cada obra. Na primeira rodada o arquivo ainda não
+    existe e a fila segue só pelo want_to_read.
+    """
+    caminho = BASE_DIR / "processed" / "livros_analise.csv"
+    if not caminho.exists():
+        logger.info("Sem %s ainda: fila do Google Books só por want_to_read", caminho)
+        return []
+    analise = pd.read_csv(caminho, encoding="utf-8-sig", usecols=lambda c: c in {"id_livro", "ids_agrupados", "leitores"})
+    if "leitores" in analise.columns:
+        analise = analise.sort_values("leitores", ascending=False)
+    ids = []
+    for linha in analise.itertuples(index=False):
+        agrupados = getattr(linha, "ids_agrupados", None)
+        ids.extend(str(agrupados).split("; ") if isinstance(agrupados, str) else [linha.id_livro])
+    return list(dict.fromkeys(ids))   # sem repetir, mantendo a ordem
 
 
 def main():
@@ -39,7 +64,7 @@ def main():
     df = pd.read_csv(entrada, encoding="utf-8-sig")
     logger.info("Lendo %d livros de %s", len(df), entrada)
 
-    df_merged = merge(df)
+    df_merged = merge(df, prioridade=carregar_prioridade())
 
     saida = BASE_DIR / "processed" / "livros_merged.csv"
     saida.parent.mkdir(parents=True, exist_ok=True)
