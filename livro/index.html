@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livros que desafiam o tempo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* Livro aberto: duas páginas de papel sobre a mesa, a página da direita vira.
+   Um mundo visual só (papel e tinta), então o tema é fixo, claro. */
+:root {
+  --mesa: #2b2a27;          /* fundo atrás do livro */
+  --papel: #f7f3ea;         /* página */
+  --papel-sombra: #e9e2d3;  /* dobra perto da lombada */
+  --tinta: #1f1d1a;         /* texto */
+  --tinta-2: #5d584f;       /* texto secundário, legendas */
+  --tinta-3: #9a9385;       /* fólios, grade dos gráficos */
+  --encadernacao: #24564a;  /* acento: verde de capa de livro */
+  --ponto: #cfc7b6;         /* pontos não destacados nos gráficos */
+  --serif-display: "Cormorant Garamond", "Garamond", "Georgia", serif;
+  --serif: "EB Garamond", "Garamond", "Georgia", serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--mesa);
+  color: var(--tinta);
+  font-family: var(--serif);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* ---------- o livro ---------- */
+.livro {
+  --w: min(96vw, calc(92vh * 1.5));   /* proporção do livro aberto 3:2 */
+  width: var(--w);
+  aspect-ratio: 3 / 2;
+  position: relative;
+  perspective: 2600px;
+}
+.pagina {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--papel);
+  container-type: size;
+  overflow: hidden;
+}
+.pagina.esq { left: 0; border-radius: 4px 0 0 4px; background: linear-gradient(to left, var(--papel-sombra), var(--papel) 9%); }
+.pagina.dir { right: 0; border-radius: 0 4px 4px 0; background: linear-gradient(to right, var(--papel-sombra), var(--papel) 9%); }
+.livro::after {           /* sombra do livro sobre a mesa */
+  content: "";
+  position: absolute; inset: 0;
+  box-shadow: 0 2.5vh 6vh rgba(0,0,0,.45);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* folha que vira: frente = página direita atual, verso = próxima esquerda */
+.folha {
+  position: absolute; top: 0; right: 0;
+  width: 50%; height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  z-index: 5;
+}
+.folha .pagina { width: 100%; backface-visibility: hidden; }
+.folha .verso { transform: rotateY(180deg); left: 0; right: auto; }
+.folha.vira { animation: vira .75s cubic-bezier(.45,.05,.3,1) forwards; }
+.folha.volta { transform: rotateY(-180deg); animation: volta .75s cubic-bezier(.45,.05,.3,1) forwards; }
+@keyframes vira { to { transform: rotateY(-180deg); } }
+@keyframes volta { to { transform: rotateY(0deg); } }
+
+/* ---------- conteúdo das páginas (unidades relativas à página) ---------- */
+.miolo {
+  position: absolute;
+  inset: 7cqh 9cqw 9cqh 11cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 2.2cqh;
+  font-size: 3.1cqh;
+  line-height: 1.42;
+}
+.pagina.esq .miolo { inset: 7cqh 11cqw 9cqh 9cqw; }
+.folio {
+  position: absolute; bottom: 4cqh;
+  font-size: 2.3cqh; color: var(--tinta-3);
+  font-variant-numeric: oldstyle-nums;
+}
+.pagina.esq .folio { left: 9cqw; }
+.pagina.dir .folio { right: 9cqw; }
+.cabeco {
+  position: absolute; top: 3.5cqh;
+  font-size: 2.1cqh; letter-spacing: .14em; text-transform: uppercase; color: var(--tinta-3);
+}
+.pagina.esq .cabeco { left: 9cqw; }
+.pagina.dir .cabeco { right: 9cqw; }
+
+h1, h2, h3 { font-family: var(--serif-display); font-weight: 600; margin: 0; text-wrap: balance; line-height: 1.05; }
+p { margin: 0; }
+.capitular::first-letter {
+  font-family: var(--serif-display); float: left;
+  font-size: 3.4em; line-height: .82; padding: .06em .08em 0 0; color: var(--encadernacao);
+}
+.versalete { font-variant-caps: all-small-caps; letter-spacing: .06em; }
+.numero-grande {
+  font-family: var(--serif-display); font-size: 13cqh; line-height: .9; font-weight: 600;
+  color: var(--encadernacao); font-variant-numeric: lining-nums;
+}
+.legenda { font-size: 2.35cqh; color: var(--tinta-2); font-style: italic; line-height: 1.35; }
+.nota { font-size: 2.15cqh; color: var(--tinta-2); line-height: 1.35; border-top: 1px solid var(--tinta-3); padding-top: 1.2cqh; margin-top: auto; }
+sup.ref { font-size: .62em; color: var(--encadernacao); font-weight: 600; }
+.passo { transition: opacity .35s ease; }
+
+/* capa */
+.capa { background: var(--encadernacao) !important; color: #efe6cf; }
+.capa .miolo { inset: 9cqh 11cqw 8cqh 13cqw; justify-content: space-between; }
+.capa h1 { font-size: 9.5cqh; font-weight: 500; color: #f4ecd6; }
+.capa .sub { font-size: 3.2cqh; font-style: italic; color: #d9cfb5; }
+.capa .filete { border-top: 1px solid #c9b98f; border-bottom: 1px solid #c9b98f; height: 1.1cqh; }
+.capa canvas { width: 100%; height: 20cqh; display: block; }
+.capa .creditos { font-size: 2.4cqh; letter-spacing: .12em; text-transform: uppercase; color: #cdbf9c; }
+.guarda {
+  background-color: #e8dfca !important;
+  background-image: radial-gradient(circle at 1px 1px, rgba(36,86,74,.18) 1px, transparent 1.6px);
+  background-size: 2.2cqh 2.2cqh;
+}
+
+/* sumário */
+.sumario { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5cqh; }
+.sumario li { display: grid; grid-template-columns: 4.5cqh 1fr auto; align-items: baseline; gap: 1.5cqw; }
+.sumario .num { font-family: var(--serif-display); color: var(--encadernacao); font-weight: 600; }
+.sumario .tit { border-bottom: 1px dotted var(--tinta-3); padding-bottom: .4cqh; }
+.sumario .pg { font-variant-numeric: oldstyle-nums tabular-nums; color: var(--tinta-2); }
+.sumario .breve { color: var(--tinta-3); font-style: italic; }
+.sumario button {
+  all: unset; cursor: pointer; display: contents;
+}
+.sumario button:focus-visible .tit { outline: 2px solid var(--encadernacao); outline-offset: 2px; }
+
+/* gráficos */
+svg.grafico { width: 100%; height: 100%; overflow: visible; }
+svg text { font-family: var(--serif); fill: var(--tinta-2); }
+.eixo line { stroke: var(--tinta-3); stroke-width: 1; }
+.grade line { stroke: #e4ddcd; stroke-width: 1; }
+.rotulo-livro { font-style: italic; fill: var(--tinta); }
+.halo { paint-order: stroke; stroke: var(--papel); stroke-width: 4px; stroke-linejoin: round; }
+.zona-graf { font-style: italic; fill: var(--tinta-3); }
+circle.pt { fill: var(--ponto); fill-opacity: .8; transition: fill .45s ease, fill-opacity .45s ease, r .45s ease; }
+circle.pt.apagado { fill-opacity: .45; }
+circle.pt.ativo { fill: var(--encadernacao); fill-opacity: .9; stroke: var(--papel); stroke-width: .8; }
+.mediana { stroke: var(--tinta); stroke-width: 2; fill: none; }
+.rotulo-mediana { fill: var(--tinta); font-variant-caps: all-small-caps; letter-spacing: .05em; }
+.dica {
+  position: absolute; z-index: 9; pointer-events: none; max-width: 30%;
+  background: var(--tinta); color: var(--papel); border-radius: 3px; padding: .55em .75em;
+  font-size: clamp(11px, 1.05vw, 15px); line-height: 1.3; display: grid; gap: .15em;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+.dica b { font-weight: 600; font-style: italic; }
+.dica .linhas { display: flex; gap: 1em; font-variant-numeric: lining-nums tabular-nums; }
+.dica .perfil { color: #c9b98f; font-size: .92em; }
+.linha-rotulo { stroke: var(--tinta-2); stroke-width: .8; fill: none; }
+
+/* tabela do apêndice */
+table { border-collapse: collapse; width: 100%; font-size: 2.45cqh; font-variant-numeric: lining-nums tabular-nums; }
+th { font-weight: 500; text-align: right; color: var(--tinta-2); border-bottom: 1px solid var(--tinta); padding: .8cqh .6cqw; font-size: .92em; }
+td { text-align: right; padding: .9cqh .6cqw; border-bottom: 1px solid #e4ddcd; }
+th:first-child, td:first-child { text-align: left; }
+ol.notas { margin: 0; padding-left: 1.2em; display: grid; gap: 1.1cqh; font-size: 2.3cqh; line-height: 1.38; }
+ol.notas li::marker { color: var(--encadernacao); font-weight: 600; }
+
+/* ---------- controles ---------- */
+.zona { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 6; background: none; border: 0; pointer-events: none; }
+.livro { cursor: pointer; }
+.zona.ant { left: 0; cursor: w-resize; }
+.zona.prox { right: 0; cursor: e-resize; }
+.zona:focus-visible { outline: 2px solid #c9b98f; outline-offset: -6px; }
+.barra {
+  position: fixed; bottom: 1.2vh; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 1.2em; align-items: center;
+  font-size: 13px; color: #b9b2a2; letter-spacing: .04em;
+}
+.barra kbd { font-family: var(--serif); border: 1px solid #6c675d; border-radius: 3px; padding: 0 .4em; color: #d8d1c0; }
+.fita {                     /* marcador de página */
+  position: absolute; top: -1.2%; width: 1.6%; height: 0; z-index: 7;
+  background: #8c2f2a; transition: left .5s ease, height .3s ease;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 94%, 0 100%);
+}
+
+/* uma página por vez em tela estreita / retrato */
+@media (max-aspect-ratio: 1/1) {
+  .livro { --w: min(94vw, calc(88vh * .75)); aspect-ratio: 3 / 4; }
+  .pagina { width: 100%; }
+  .livro.mostra-dir .pagina.esq, .livro.mostra-esq .pagina.dir { display: none; }
+  .pagina.esq, .pagina.dir { left: 0; right: 0; border-radius: 4px; }
+  .fita { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .folha.vira, .folha.volta { animation-duration: .01s; }
+  circle.pt { transition: none; }
+  .passo, .fita { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="livro" id="livro" aria-live="polite">
+  <div class="pagina esq" id="esq"></div>
+  <div class="pagina dir" id="dir"></div>
+  <div class="fita" id="fita" aria-hidden="true"></div>
+  <div class="dica" id="dica" role="tooltip" hidden></div>
+  <button class="zona ant" id="ant" aria-label="Voltar"></button>
+  <button class="zona prox" id="prox" aria-label="Avançar"></button>
+</div>
+<div class="barra" aria-hidden="true">
+  <span><kbd>←</kbd> <kbd>→</kbd> ou espaço para virar</span>
+  <span id="onde"></span>
+</div>
+
+<script src="dados.js"></script>
+<script>
+"use strict";
+const D = window.DADOS;
+const PERFIS = D.perfis;
+const L = Object.fromEntries(D.livros.map(l => [l[0], {
+  id: l[0], titulo: l[1], autor: l[2], ano: l[3], genero: l[4],
+  leitores: l[5] || 0, edicoes: l[6] || 1, perfil: l[7]
+}]));
+const LIVROS = Object.values(L);
+const RESUMO = Object.fromEntries(D.resumo.map(r => [r.perfil, r]));
+
+// nomes em português dos livros citados no texto
+const ROTULO = {
+  OL1168083W: "1984", OL66554W: "Orgulho e Preconceito", OL27482W: "O Hobbit",
+  OL10263W: "O Pequeno Príncipe", OL18020194W: "É Assim que Acaba",
+  OL82563W: "Harry Potter e a Pedra Filosofal", OL28952677W: "Icebreaker",
+  OL1088783W: "The Crimson Fairy Book", OL1088888W: "The Yellow Fairy Book",
+  OL361466W: "Henrique V", OL796465W: "O Alquimista", OL872932W: "Sidarta",
+  OL10432709W: "Os Irmãos Karamázov"
+};
+const AUTORES = "Leonardo Rodrigues de Lima";   // acrescente o grupo aqui
+
+const fmt = n => Math.round(n).toLocaleString("pt-BR");
+const mil = n => n >= 10000 ? (n / 1000).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + " mil" : fmt(n);
+const data = s => { const [a, m, d] = s.split("-"); return `${d}/${m}/${a}`; };
+const R = p => RESUMO[p];
+
+/* ---------------- gráfico: edições × leitores ---------------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(nome, attrs, pai) {
+  const e = document.createElementNS(NS, nome);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (pai) pai.appendChild(e);
+  return e;
+}
+const log = Math.log10;
+
+// espalhamento leve e fixo (o mesmo a cada abertura) para desfazer as colunas
+// de livros com 1, 2, 3... edições ou leitores, que se empilhariam no mesmo ponto
+function sorte(id, sal) {
+  let h = 2166136261 ^ sal;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 10000) / 10000 - .5;
+}
+function espalha(v, id, sal) {
+  const base = log(Math.max(v, 1));
+  const passoLog = v < 1 ? .3 : log((Math.max(v, 1) + 1) / Math.max(v, 1));   // distância até o próximo inteiro
+  const amp = Math.min(.12, passoLog * .8);
+  return base + sorte(id, sal) * amp - (v < 1 ? .16 : 0);                     // 0 leitores fica logo abaixo do 1
+}
+LIVROS.forEach(l => { l.lx = espalha(l.edicoes, l.id, 7); l.ly = espalha(l.leitores, l.id, 13); });
+
+function montarDispersao(svg, compacto) {
+  const caixa = svg.getBoundingClientRect();
+  const W = caixa.width, H = caixa.height;
+  const fs = compacto ? Math.max(9, H * .062) : H * .034;
+  const m = compacto ? {t: fs * .5, r: fs * .5, b: fs * 1.7, l: fs * 3.1} : {t: fs * .8, r: fs * 1.2, b: fs * 3.2, l: fs * 4.6};
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+  const X = lv => m.l + (lv / 4) * (W - m.l - m.r);            // log10 de 1 a 10.000 edições
+  const Y = lv => H - m.b - ((lv + .25) / 5.25) * (H - m.t - m.b); // log10 de ~0,5 a 100.000 leitores
+  const grade = el("g", {class: "grade"}, svg), eixo = el("g", {class: "eixo"}, svg);
+  (compacto ? [0, 2, 4] : [0, 1, 2, 3, 4]).forEach(e => {
+    el("line", {x1: X(e), x2: X(e), y1: m.t, y2: H - m.b}, grade);
+    el("text", {x: X(e), y: H - m.b + fs * 1.3, "text-anchor": "middle", "font-size": fs}, eixo).textContent = fmt(10 ** e);
+  });
+  (compacto ? [0, 2, 4] : [0, 1, 2, 3, 4, 5]).forEach(e => {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(e), y2: Y(e)}, grade);
+    el("text", {x: m.l - fs * .5, y: Y(e) + fs * .35, "text-anchor": "end", "font-size": fs}, eixo).textContent = fmt(10 ** e);
+  });
+  el("line", {x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b}, eixo);
+  if (!compacto) {
+    el("text", {x: (m.l + W - m.r) / 2, y: H - fs * .4, "text-anchor": "middle", "font-size": fs * 1.05, "font-style": "italic"}, eixo)
+      .textContent = "edições publicadas →";
+    el("text", {x: 0, y: 0, "text-anchor": "middle", "font-size": fs * 1.05, "font-style": "italic",
+      transform: `translate(${fs * 1.1} ${(m.t + H - m.b) / 2}) rotate(-90)`}, eixo).textContent = "leitores hoje →";
+    // nomes das regiões do gráfico
+    const z = {class: "zona-graf", "font-size": fs * .95};
+    el("text", {...z, x: X(.08), y: Y(4.92)}, svg).textContent = "lido, pouco reeditado";
+    el("text", {...z, x: X(3.95), y: Y(-.05), "text-anchor": "end"}, svg).textContent = "reeditado, pouco lido hoje";
+  }
+  const r = compacto ? Math.max(1.3, H * .008) : Math.max(1.7, H * .0058);
+  const gPts = el("g", {}, svg);
+  const pts = LIVROS.map(l => {
+    const c = el("circle", {class: "pt", cx: X(l.lx), cy: Y(l.ly), style: `r:${r}px`}, gPts);
+    c._livro = l; return c;
+  });
+  const gExtra = el("g", {}, svg);
+  svg._ctx = {W, H, fs, m, r, X, Y, pts, gPts, gExtra, compacto, destaque: undefined};
+  ligarDica(svg);
+  return svg._ctx;
+}
+
+function destacar(svg, perfil, rotulos = []) {
+  const c = svg._ctx;
+  c.destaque = perfil;
+  c.pts.forEach(pt => {
+    const ativo = perfil !== null && pt._livro.perfil === perfil;
+    pt.classList.toggle("ativo", ativo);
+    pt.classList.toggle("apagado", perfil !== null && !ativo);
+    pt.style.r = (ativo ? c.r * 1.3 : c.r) + "px";
+    if (ativo) c.gPts.appendChild(pt);   // os do perfil ficam por cima
+  });
+  c.gExtra.innerHTML = "";
+  const {X, Y, fs} = c;
+  if (perfil !== null) {                 // mediana do perfil
+    const md = D.resumo[perfil];
+    const mx = X(log(Math.max(md.mediana_edicoes, 1))), my = Y(log(Math.max(md.mediana_leitores, 1)));
+    const t = fs * (c.compacto ? .55 : .7);
+    el("path", {class: "mediana", d: `M${mx - t} ${my}H${mx + t}M${mx} ${my - t}V${my + t}`}, c.gExtra);
+    if (!c.compacto) {
+      const tx = el("text", {class: "halo rotulo-mediana", x: mx + t * 1.4, y: my + fs * 1.5, "font-size": fs * .9}, c.gExtra);
+      tx.textContent = "mediana";
+    }
+  }
+  rotulos.forEach(([id, dx, dy, ancora = "start"]) => {
+    const l = L[id]; if (!l) return;
+    const x = X(l.lx), y = Y(l.ly), lx = x + dx * fs, ly = y + dy * fs;
+    el("circle", {cx: x, cy: y, r: c.r * 2.3, fill: "none", stroke: "var(--tinta)", "stroke-width": 1}, c.gExtra);
+    el("path", {class: "linha-rotulo", d: `M${x} ${y} L${lx} ${ly}`}, c.gExtra);
+    const t = el("text", {class: "rotulo-livro halo", x: lx + (ancora === "end" ? -fs * .3 : fs * .3), y: ly + fs * .35,
+      "text-anchor": ancora, "font-size": fs * 1.1}, c.gExtra);
+    t.textContent = ROTULO[id] || l.titulo;
+    const larg = t.getComputedTextLength();
+    if (ancora === "start" && lx + fs * .3 + larg > c.W) { t.setAttribute("text-anchor", "end"); t.setAttribute("x", c.W); t.setAttribute("y", ly - fs * .5); }
+    if (ancora === "end" && lx - fs * .3 - larg < c.m.l) { t.setAttribute("text-anchor", "start"); t.setAttribute("x", c.m.l + fs * .3); t.setAttribute("y", ly - fs * .5); }
+  });
+}
+
+// dica ao passar o mouse: o ponto mais próximo do cursor, dentro de um raio generoso
+function ligarDica(svg) {
+  const dica = document.getElementById("dica");
+  svg.addEventListener("pointermove", e => {
+    const c = svg._ctx, cx = svg.getBoundingClientRect();
+    const px = (e.clientX - cx.left) * (c.W / cx.width), py = (e.clientY - cx.top) * (c.H / cx.height);
+    let melhor = null, dist = (c.compacto ? 10 : 14) ** 2;
+    for (const pt of c.pts) {
+      if (c.destaque !== null && c.destaque !== undefined && pt._livro.perfil !== c.destaque) continue;
+      const dx = +pt.getAttribute("cx") - px, dy = +pt.getAttribute("cy") - py, d = dx * dx + dy * dy;
+      if (d < dist) { dist = d; melhor = pt; }
+    }
+    if (!melhor) { dica.hidden = true; return; }
+    const l = melhor._livro, caixaLivro = $livro.getBoundingClientRect();
+    dica.innerHTML = `<b>${ROTULO[l.id] || l.titulo}</b><span>${l.autor}${l.ano ? ", " + l.ano : ""}</span>
+      <span class="linhas"><span>${fmt(l.edicoes)} edições</span><span>${fmt(l.leitores)} leitores</span></span>
+      <span class="perfil">${PERFIS[l.perfil]}${l.genero ? " · " + l.genero : ""}</span>`;
+    dica.hidden = false;
+    const x = e.clientX - caixaLivro.left, y = e.clientY - caixaLivro.top;
+    const esquerda = x > caixaLivro.width * .7;
+    dica.style.left = (esquerda ? x - dica.offsetWidth - 14 : x + 14) + "px";
+    dica.style.top = Math.max(4, y - dica.offsetHeight - 10) + "px";
+  });
+  svg.addEventListener("pointerleave", () => { dica.hidden = true; });
+}
+
+/* ---------------- capa: estante dos clássicos vivos ---------------- */
+function estante(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const c = canvas.getContext("2d"); c.scale(dpr, dpr);
+  const classicos = LIVROS.filter(l => l.perfil === 0 && l.ano).sort((a, b) => a.ano - b.ano);
+  const larg = classicos.map(l => 0.6 + log(l.leitores));
+  const total = larg.reduce((a, b) => a + b, 0);
+  const esc = w / total;
+  const maxEd = log(Math.max(...classicos.map(l => l.edicoes)));
+  let x = 0;
+  classicos.forEach((l, i) => {
+    const lw = larg[i] * esc;
+    const lh = h * (0.45 + 0.55 * log(l.edicoes) / maxEd);
+    c.fillStyle = i % 3 === 0 ? "#d9cba5" : i % 3 === 1 ? "#bfae84" : "#a8976d";
+    c.fillRect(x + lw * .08, h - lh, lw * .84, lh);
+    c.fillStyle = "rgba(36,86,74,.55)";
+    c.fillRect(x + lw * .08, h - lh + lh * .12, lw * .84, Math.max(1, lh * .025));
+    x += lw;
+  });
+  c.fillStyle = "#c9b98f"; c.fillRect(0, h - 1.5, w, 1.5);
+}
+
+/* ---------------- as páginas ---------------- */
+const cl = R("Clássico vivo"), fe = R("Fenômeno recente"), es = R("Esquecido"), rd = R("Redescoberto / em alta");
+const pp = L.OL66554W, ie = L.OL18020194W, cf = L.OL1088783W;
+const M = D.meta;
+
+const SPREADS = [
+  { // 0 capa
+    nome: "capa",
+    esq: () => ({cls: "guarda", html: ""}),
+    dir: () => ({cls: "capa", html: `
+      <div class="miolo">
+        <div class="creditos">Book Trends · ${M.livros.toLocaleString("pt-BR")} livros</div>
+        <div style="display:grid;gap:3cqh">
+          <div class="filete"></div>
+          <h1>Livros que<br>desafiam o tempo</h1>
+          <p class="sub">O que mantém uma obra viva décadas depois de publicada</p>
+          <div class="filete"></div>
+        </div>
+        <div style="display:grid;gap:1.2cqh">
+          <canvas id="estante" aria-label="Estante com os ${cl.livros} clássicos vivos em ordem de publicação"></canvas>
+          <p style="font-size:2cqh;font-style:italic;color:#cdbf9c">Na capa, os ${cl.livros} clássicos vivos da base em ordem de publicação; a altura de cada lombada mostra as edições.</p>
+        </div>
+        <div class="creditos">${AUTORES}</div>
+      </div>`}),
+    depois: () => estante(document.getElementById("estante"))
+  },
+  { // 1 folha de rosto + sumário
+    nome: "sumario",
+    esq: () => ({html: `
+      <div class="miolo" style="justify-content:center;text-align:center;gap:4cqh">
+        <h2 style="font-size:6.4cqh;font-weight:500">Livros que desafiam o tempo</h2>
+        <p class="legenda" style="font-size:3cqh">Uma investigação com os dados da Open Library<br>sobre ${M.livros.toLocaleString("pt-BR")} livros conhecidos</p>
+        <p class="versalete" style="color:var(--tinta-2)">${AUTORES}</p>
+        <p class="legenda">Coletas diárias de ${data(M.primeira_coleta)} a ${data(M.ultima_coleta)}</p>
+        <p class="versalete" style="margin-top:6cqh;color:var(--tinta-3)">Projeto Integrador · Ciência da Computação · Senac</p>
+      </div>`, folio: "i"}),
+    dir: () => ({html: `
+      <div class="miolo">
+        <h2 style="font-size:5.6cqh">Sumário</h2>
+        <ul class="sumario">
+          ${[
+            ["I", "A pergunta", null], ["II", "A estante inteira", null],
+            ["III", "Os quatro destinos", "cap3"], ["IV", "Quanto tempo dura um gênero", null],
+            ["V", "Os que voltaram", null], ["VI", "E o Brasil?", null],
+            ["", "Apêndice: as métricas", "apendice"], ["", "Notas e colofão", "notas"]
+          ].map(([n, t, alvo]) => alvo
+            ? `<li><button data-ir="${alvo}"><span class="num">${n}</span><span class="tit">${t}</span><span class="pg">${pagina(alvo)}</span></button></li>`
+            : `<li><span class="num">${n}</span><span class="tit">${t}</span><span class="pg breve">em preparação</span></li>`).join("")}
+        </ul>
+        <p class="nota">Este exemplar traz o capítulo III completo. Os demais estão sendo escritos a partir das mesmas coletas.</p>
+      </div>`, folio: "ii"})
+  },
+  { // 2 abertura do cap. III
+    nome: "cap3",
+    esq: () => ({html: `
+      <div class="miolo" style="justify-content:center;gap:5cqh">
+        <div class="numero-grande" style="font-size:16cqh">III</div>
+        <h2 style="font-size:8cqh">Os quatro<br>destinos</h2>
+        <blockquote style="margin:4cqh 0 0;font-style:italic;color:var(--tinta-2);font-size:3.2cqh;max-width:85%">
+          “De fazer muitos livros não há fim.”
+          <footer class="versalete" style="font-style:normal;margin-top:1cqh;font-size:2.4cqh">Eclesiastes 12:12</footer>
+        </blockquote>
+      </div>`, folio: pagina("cap3")}),
+    dir: () => ({cabeco: "Os quatro destinos", html: `
+      <div class="miolo">
+        <p class="capitular">Todo livro carrega dois números. O primeiro é o passado: quantas vezes alguém decidiu que valia a pena imprimi-lo de novo. O segundo é o presente: quantas pessoas o têm hoje na estante, lendo ou querendo ler.</p>
+        <p>Cruzando os dois, os ${M.livros.toLocaleString("pt-BR")} livros da base se separam em destinos bem diferentes. Quatro deles contam a história deste livro.<sup class="ref">1</sup></p>
+        <p class="nota"><sup class="ref">1</sup> Edições e leitores segundo a Open Library. Cada livro é comparado com os do mesmo período de publicação; ver Apêndice.</p>
+      </div>`, folio: pagina("cap3") + 1})
+  },
+  { // 3 o gráfico, revelado em passos
+    nome: "cap3-grafico",
+    passos: 5,
+    esq: (p) => ({cabeco: "Capítulo III", html: `<div class="miolo" id="texto-passo">${textoPasso(p)}</div>`, folio: pagina("cap3") + 2}),
+    dir: () => ({html: `
+      <div class="miolo" style="inset:6cqh 7cqw 8cqh 8cqw;gap:1cqh">
+        <div style="flex:1;min-height:0"><svg class="grafico" id="disp" role="img" aria-label="Edições publicadas por leitores hoje, um ponto por livro, em escala logarítmica"></svg></div>
+        <p class="legenda" id="legenda-passo"></p>
+      </div>`, folio: pagina("cap3") + 3}),
+    depois: (p) => passoGrafico(p)
+  },
+  { // 4 os quatro lado a lado
+    nome: "cap3-destinos",
+    esq: () => ({cabeco: "Capítulo III", html: `
+      <div class="miolo">
+        <h3 style="font-size:4.6cqh">O passado não garante o futuro</h3>
+        <p>Um clássico vivo típico tem ${fmt(cl.mediana_edicoes)} edições e ${fmt(cl.mediana_idade)} anos. Um esquecido típico tem ${fmt(es.mediana_edicoes)} edições: ser reimpresso muitas vezes no seu tempo não bastou.</p>
+        <p>Os fenômenos recentes fazem o caminho inverso. Com só ${fmt(fe.mediana_edicoes)} edições, têm a maior mediana de leitores da base: ${fmt(fe.mediana_leitores)}.<sup class="ref">2</sup></p>
+        <p>A pergunta dos próximos capítulos é o que esses ${fmt(fe.livros)} fenômenos precisam para virar, daqui a cinquenta anos, o próximo grupo de clássicos.</p>
+        <p class="nota"><sup class="ref">2</sup> Medianas por perfil; os ${fmt(R("Estável").livros)} livros “estáveis”, sem destaque, ficam fora destes painéis. Tabela completa no Apêndice.</p>
+      </div>`, folio: pagina("cap3") + 4}),
+    dir: () => ({html: `
+      <div class="miolo" style="inset:6cqh 7cqw 8cqh 8cqw;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3cqh 4cqw">
+        ${[0, 1, 2, 3].map(i => `
+          <figure style="margin:0;display:flex;flex-direction:column;gap:.6cqh;min-height:0">
+            <figcaption style="font-size:2.5cqh"><span style="font-family:var(--serif-display);font-weight:600;font-size:1.15em">${PERFIS[i].replace(" / em alta", "")}</span> <span style="color:var(--tinta-2)">· ${fmt(D.resumo[i].livros)}</span></figcaption>
+            <div style="flex:1;min-height:0"><svg class="grafico" id="mini${i}" role="img" aria-label="${PERFIS[i]}: ${D.resumo[i].livros} livros"></svg></div>
+          </figure>`).join("")}
+        <p class="legenda" style="grid-column:1/-1;position:absolute;bottom:-5.5cqh">Fig. 2 · Mesmo gráfico da figura 1, um perfil por painel. A cruz marca a mediana do perfil.</p>
+      </div>`, folio: pagina("cap3") + 5}),
+    depois: () => [0, 1, 2, 3].forEach(i => { const g = document.getElementById("mini" + i); montarDispersao(g, true); destacar(g, i); })
+  },
+  { // 5 apêndice: tabelas
+    nome: "apendice",
+    esq: () => ({cabeco: "Apêndice", html: `
+      <div class="miolo">
+        <h2 style="font-size:5.4cqh">Apêndice: as métricas</h2>
+        <table>
+          <thead><tr><th>Perfil</th><th>Livros</th><th>Leitores</th><th>Edições</th><th>Idade</th><th>% leitores</th></tr></thead>
+          <tbody>${D.resumo.map(r => `<tr><td>${r.perfil.replace(" / em alta", "")}</td><td>${fmt(r.livros)}</td><td>${fmt(r.mediana_leitores)}</td><td>${fmt(r.mediana_edicoes)}</td><td>${fmt(r.mediana_idade)}</td><td>${r.pct_leitores.toLocaleString("pt-BR")}%</td></tr>`).join("")}</tbody>
+        </table>
+        <p class="legenda">Tabela A · Perfis de popularidade na última coleta (${data(M.ultima_coleta)}). Leitores, edições e idade são medianas; idade em anos desde a primeira publicação. A última coluna é a parte de todos os leitores da base que cabe a cada perfil.</p>
+      </div>`, folio: pagina("apendice")}),
+    dir: () => ({cabeco: "Apêndice", html: `
+      <div class="miolo">
+        <h3 style="font-size:4.2cqh">Como cada perfil é definido</h3>
+        <p>Cada livro é comparado com os livros publicados no mesmo período. “Quartil de cima” quer dizer estar entre os 25% com mais edições ou mais leitores daquele período.</p>
+        <table>
+          <thead><tr><th>Perfil</th><th style="text-align:left">Regra</th></tr></thead>
+          <tbody>
+            <tr><td>Clássico vivo</td><td style="text-align:left">Publicado até 1976; quartil de cima em edições e em leitores</td></tr>
+            <tr><td>Fenômeno recente</td><td style="text-align:left">De 1997 em diante; entre os 10% mais lidos</td></tr>
+            <tr><td>Esquecido</td><td style="text-align:left">Até 1996; edições acima da mediana, leitores no quartil de baixo</td></tr>
+            <tr><td>Redescoberto</td><td style="text-align:left">Até 1996; entre os 10% que mais ganharam leitores em 30 dias</td></tr>
+            <tr><td>Estável</td><td style="text-align:left">Todos os outros</td></tr>
+          </tbody>
+        </table>
+        <p class="legenda">Tabela B · Regras dos perfis. Quando um livro cumpre mais de uma, vale a de cima.</p>
+      </div>`, folio: pagina("apendice") + 1})
+  },
+  { // 6 notas + colofão
+    nome: "notas",
+    esq: () => ({cabeco: "Notas", html: `
+      <div class="miolo">
+        <h3 style="font-size:4.2cqh">Notas e definições</h3>
+        <ol class="notas">
+          <li><b>Fonte.</b> Open Library (Internet Archive), coletas diárias de ${data(M.primeira_coleta)} a ${data(M.ultima_coleta)}, 7 gêneros, ordenadas pelos livros mais presentes nas estantes dos leitores.</li>
+          <li><b>Leitores</b> = pessoas que marcaram o livro como “quero ler”, “lendo” ou “já li”.</li>
+          <li><b>Edições</b> = edições do livro catalogadas; cópias duplicadas da mesma obra foram somadas.</li>
+          <li><b>Base de análise:</b> ${M.livros.toLocaleString("pt-BR")} livros publicados até 2020 com pelo menos 50 leitores ou 20 edições; ${fmt(M.com_edicao_pt)} têm edição em português.</li>
+          <li><b>Períodos:</b> décadas; as mais antigas foram agrupadas até ter 50 livros cada.</li>
+          <li><b>Escala:</b> os gráficos usam escala logarítmica; livros com 0 leitores aparecem na linha do 1.</li>
+          <li><b>Viés de sobrevivência:</b> a base só tem livros que um dia foram conhecidos. Ela mostra o que acontece com eles, não a chance de qualquer livro durar.</li>
+          <li><b>Gêneros e anos</b> dos 300 livros mais lidos foram conferidos à mão.</li>
+        </ol>
+      </div>`, folio: pagina("notas")}),
+    dir: () => ({html: `
+      <div class="miolo" style="justify-content:flex-end;text-align:center;gap:2cqh">
+        <p class="versalete" style="color:var(--tinta-2)">Colofão</p>
+        <p class="legenda" style="font-size:2.6cqh">Composto em EB Garamond e Cormorant Garamond.<br>Dados da Open Library e do Google Books, tratados em Python.<br>Código em github.com/leolima92/PI-6-DataView</p>
+        <p class="legenda">${AUTORES} · ${M.ultima_coleta.slice(0, 4)}</p>
+      </div>`, folio: pagina("notas") + 1})
+  },
+  { // 7 contracapa
+    nome: "fim",
+    esq: () => ({cls: "guarda", html: ""}),
+    dir: () => ({cls: "capa", html: `
+      <div class="miolo" style="justify-content:center;gap:3cqh">
+        <div class="filete"></div>
+        <p style="font-size:3.4cqh;font-style:italic;color:#efe6cf;line-height:1.45">Por que alguns livros continuam sendo lidos décadas depois de publicados, enquanto outros desaparecem? Este livro segue ${M.livros.toLocaleString("pt-BR")} obras ao longo de ${Math.round((new Date(M.ultima_coleta) - new Date(M.primeira_coleta)) / 864e5)} dias de coleta para procurar a resposta.</p>
+        <div class="filete"></div>
+      </div>`})
+  }
+];
+
+// numeração das páginas: capa e sumário são romanas; o resto conta a partir do cap. III (p. 1)
+function pagina(nome) {
+  const i = SPREADS.findIndex(s => s.nome === nome);
+  return Math.max(1, (i - 2) * 2 + 1);
+}
+
+const PASSOS = [
+  {perfil: null, titulo: "livros na base", texto: "Cada ponto é um livro. Quanto mais à direita, mais vezes ele foi reimpresso. Quanto mais alto, mais gente o lê hoje.", rotulos: [["OL66554W", -4, -2.4, "end"], ["OL18020194W", 2.6, 0.2]], legenda: "Fig. 1 · Edições publicadas e leitores hoje, um ponto por livro. Escalas logarítmicas."},
+  {perfil: 0, titulo: "Clássicos vivos", texto: `Reimpressos centenas de vezes e ainda lidos. São ${fmt(cl.livros)}, com mediana de ${fmt(cl.mediana_edicoes)} edições e ${fmt(cl.mediana_idade)} anos de idade.`, rotulos: [["OL66554W", -4, -2.4, "end"], ["OL1168083W", -6, -3.6, "end"], ["OL10263W", 4, 2.6]], legenda: "Clássico vivo: até 1976, entre os mais reeditados e os mais lidos do seu período."},
+  {perfil: 1, titulo: "Fenômenos recentes", texto: `Poucos anos, poucas edições e muitos leitores. <i>É Assim que Acaba</i> tem ${fmt(ie.edicoes)} edições e ${mil(ie.leitores)} leitores, ${Math.round(ie.leitores / pp.leitores)} vezes os de <i>Orgulho e Preconceito</i>.`, rotulos: [["OL18020194W", 2.6, 0.2], ["OL82563W", 2.4, 1.8], ["OL28952677W", -1.5, 2.8, "end"]], legenda: "Fenômeno recente: de 1997 em diante, entre os 10% mais lidos do seu período."},
+  {perfil: 2, titulo: "Esquecidos", texto: `Um dia alguém achou que eles durariam. <i>The Crimson Fairy Book</i>, de Andrew Lang, teve ${fmt(cf.edicoes)} edições. Hoje tem ${fmt(cf.leitores)} leitores.`, rotulos: [["OL1088783W", 2.4, 1.6], ["OL361466W", 2.6, -1.8]], legenda: "Esquecido: até 1996, reeditado acima da mediana do período, mas entre os menos lidos."},
+  {perfil: 3, titulo: "Redescobertos", texto: `Livros antigos que voltaram a ganhar leitores agora, como <i>O Alquimista</i> e <i>Sidarta</i>. São os ${fmt(rd.livros)} que mais cresceram durante a coleta.`, rotulos: [["OL796465W", -3.5, -2, "end"], ["OL872932W", 3, 1.4]], legenda: "Redescoberto: até 1996, entre os 10% que mais ganharam leitores em 30 dias."}
+];
+function textoPasso(p) {
+  const s = PASSOS[p];
+  return `
+    <div class="numero-grande passo">${s.perfil === null ? fmt(M.livros) : fmt(D.resumo[s.perfil].livros)}</div>
+    <h3 class="passo" style="font-size:5.4cqh">${s.titulo}</h3>
+    <p class="passo">${s.texto}</p>
+    <p class="nota" style="border:0;font-style:italic">${p + 1} de ${PASSOS.length}${p < PASSOS.length - 1 ? " · avance para o próximo destino" : ""}</p>`;
+}
+function passoGrafico(p) {
+  const s = PASSOS[p], g = document.getElementById("disp");
+  if (!g._ctx) montarDispersao(g, false);
+  destacar(g, s.perfil, s.rotulos);
+  document.getElementById("legenda-passo").textContent = s.legenda;
+}
+
+/* ---------------- motor do livro ---------------- */
+const $esq = document.getElementById("esq"), $dir = document.getElementById("dir");
+const $livro = document.getElementById("livro"), $fita = document.getElementById("fita");
+const estreito = () => matchMedia("(max-aspect-ratio: 1/1)").matches;
+let atual = 0, passo = 0, lado = "esq", animando = false;
+
+function preencher(div, conteudo, lado) {
+  div.className = `pagina ${lado} ${conteudo.cls || ""}`;
+  div.innerHTML = (conteudo.cabeco ? `<div class="cabeco">${conteudo.cabeco}</div>` : "") + conteudo.html +
+    (conteudo.folio !== undefined ? `<div class="folio">${conteudo.folio}</div>` : "");
+}
+const esconderDica = () => { document.getElementById("dica").hidden = true; };
+document.addEventListener("pointermove", e => { if (!e.target.closest || !e.target.closest("svg.grafico")) esconderDica(); });
+function desenhar() {
+  esconderDica();
+  const s = SPREADS[atual];
+  preencher($esq, s.esq(passo), "esq");
+  preencher($dir, s.dir(passo), "dir");
+  $livro.classList.toggle("mostra-esq", lado === "esq");
+  $livro.classList.toggle("mostra-dir", lado === "dir");
+  if (s.depois) requestAnimationFrame(() => s.depois(passo));
+  ligarSumario();
+  $fita.style.left = "51.2%";
+  $fita.style.height = atual === 0 ? "0" : "12%";
+  document.getElementById("onde").textContent = `${atual + 1} / ${SPREADS.length}`;
+  if (location.hash.slice(1) !== s.nome) history.replaceState(null, "", "#" + s.nome);
+}
+function ligarSumario() {
+  document.querySelectorAll("[data-ir]").forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation(); irPara(SPREADS.findIndex(s => s.nome === b.dataset.ir));
+  }));
+}
+function virar(dir) {   // dir = +1 avança, -1 volta
+  if (animando) return;
+  const destino = atual + dir;
+  if (destino < 0 || destino >= SPREADS.length) return;
+  const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (estreito() || reduzido) { atual = destino; passo = dir > 0 ? 0 : (SPREADS[destino].passos || 1) - 1; lado = dir > 0 ? "esq" : "dir"; desenhar(); return; }
+
+  animando = true;
+  const de = SPREADS[atual], para = SPREADS[destino];
+  const pPara = dir > 0 ? 0 : (para.passos || 1) - 1;
+  const folha = document.createElement("div");
+  const frente = document.createElement("div"), verso = document.createElement("div");
+  frente.className = "pagina dir"; verso.className = "pagina esq verso";
+  folha.className = "folha";
+  folha.append(frente, verso);
+  if (dir > 0) {
+    preencher(frente, de.dir(passo), "dir");
+    preencher(verso, para.esq(pPara), "esq"); verso.classList.add("verso");
+    preencher($dir, para.dir(pPara), "dir");
+    folha.classList.add("vira");
+  } else {
+    preencher(frente, para.dir(pPara), "dir");
+    preencher(verso, de.esq(passo), "esq"); verso.classList.add("verso");
+    preencher($esq, para.esq(pPara), "esq");
+    folha.classList.add("volta");
+  }
+  $livro.appendChild(folha);
+  folha.addEventListener("animationend", () => {
+    folha.remove(); atual = destino; passo = pPara; animando = false; desenhar();
+  }, {once: true});
+}
+function avancar() {
+  const s = SPREADS[atual];
+  if (estreito() && lado === "esq") { lado = "dir"; desenhar(); return; }
+  if (s.passos && passo < s.passos - 1) { passo++; atualizarPasso(); return; }
+  virar(+1);
+}
+function voltar() {
+  const s = SPREADS[atual];
+  if (s.passos && passo > 0) { passo--; atualizarPasso(); return; }
+  if (estreito() && lado === "dir") { lado = "esq"; desenhar(); return; }
+  virar(-1);
+}
+function atualizarPasso() {
+  esconderDica();
+  const s = SPREADS[atual];
+  document.getElementById("texto-passo").innerHTML = textoPasso(passo);
+  s.depois(passo);
+}
+function irPara(i) {
+  if (i < 0) return;
+  atual = i; passo = 0; lado = "esq"; desenhar();
+}
+
+// clique na metade direita avança, na esquerda volta; links do sumário têm prioridade.
+// Os botões .zona ficam só para o teclado e leitores de tela, sem tapar os gráficos.
+$livro.addEventListener("click", e => {
+  const alvo = e.target.closest("[data-ir]");
+  if (alvo) return;
+  const caixa = $livro.getBoundingClientRect();
+  (e.clientX - caixa.left > caixa.width / 2 ? avancar : voltar)();
+});
+document.getElementById("prox").addEventListener("click", e => { e.stopPropagation(); avancar(); });
+document.getElementById("ant").addEventListener("click", e => { e.stopPropagation(); voltar(); });
+document.addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); avancar(); }
+  else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); voltar(); }
+  else if (e.key === "Home") irPara(0);
+  else if (e.key === "End") irPara(SPREADS.length - 1);
+});
+window.addEventListener("hashchange", () => {
+  const i = SPREADS.findIndex(s => s.nome === location.hash.slice(1));
+  if (i >= 0 && i !== atual) irPara(i);
+});
+let redim; window.addEventListener("resize", () => { clearTimeout(redim); redim = setTimeout(desenhar, 150); });
+
+const inicio = SPREADS.findIndex(s => s.nome === location.hash.slice(1));
+atual = inicio >= 0 ? inicio : 0;
+document.fonts.ready.then(desenhar);
+desenhar();
+</script>
+</body>
+</html>
