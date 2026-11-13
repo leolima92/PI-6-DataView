@@ -125,3 +125,11 @@ ORDEM_GENEROS = [
 # TÍTULOS EM PORTUGUÊS (traduzir_titulos.py)
 TITULOS_MAX_POR_RODADA = 300  # obras novas consultadas por rodada (OL + Google Books)
 TITULOS_GB_MAX = 200          # dessas, quantas podem ir ao Google Books (protege a cota)
+
+# CURVA DE SOBREVIVÊNCIA (analise_sobrevivencia.py)
+# Um livro está "vivo" se tem pelo menos LIMIAR_VIVO leitores hoje.
+# None = usa a mediana de leitores das obras conhecidas da base.
+LIMIAR_VIVO = None
+# Faixas de idade (anos desde a publicação) do eixo X; a última é aberta
+FAIXAS_IDADE = [0, 10, 20, 30, 40, 50, 75, 100, 150]
+MIN_LIVROS_PONTO = 10   # faixa com menos livros que isso não entra no gráfico

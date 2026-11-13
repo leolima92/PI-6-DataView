@@ -42,6 +42,9 @@ Open Library (search.json)
         │  analise_perfis.py (classifica cada livro conhecido)
         ▼
    processed/perfis_livros.csv  +  analise/AAAA-MM/perfis_AAAA-MM-DD.csv
+        │  analise_sobrevivencia.py (curva de sobrevivência por gênero)
+        ▼
+   processed/sobrevivencia.csv  +  analise/graficos/sobrevivencia_por_genero.png
         │
         ▼
    Power BI / Python / Tableau
@@ -297,6 +300,32 @@ Roda sozinho no fim do `run_diario.py`, depois do `tratar.py`. O
 crescimento só é calculado para livros presentes na última coleta e vistos
 em 2+ datas (`dias_acompanhado`); `crescimento_pct_30d` normaliza por mês.
 O perfil "Redescoberto" fica mais confiável quanto mais meses de histórico houver.
+
+---
+
+## Curva de sobrevivência (`analise_sobrevivencia.py`)
+
+*Quanto tempo um livro continua sendo lido?* Para cada faixa de idade
+(`FAIXAS_IDADE`, anos desde a publicação) e cada gênero principal, calcula
+a fração de livros **vivos**: com pelo menos `LIMIAR_VIVO` leitores hoje.
+Com `LIMIAR_VIVO = None`, o limiar é a mediana de leitores da base.
+
+- `processed/sobrevivencia.csv`: `genero`, `faixa_idade`, `livros`, `vivos`,
+  `pct_vivos`, `exibir` (faixa com pelo menos `MIN_LIVROS_PONTO` livros) e
+  `limiar_leitores`; inclui a linha "Todos os gêneros".
+- `analise/graficos/sobrevivencia_por_genero.png`: um painel por gênero,
+  com a curva geral tracejada como referência.
+
+![Curva de sobrevivência por gênero](docs/sobrevivencia_por_genero.png)
+
+*Gráfico gerado com o histórico de set–nov/2026.*
+
+**Viés de sobrevivência:** a base só tem livros que um dia foram conhecidos
+(`MIN_LEITORES` / `MIN_EDICOES`). A curva mede quantos desses continuam
+lidos com o tempo, não a chance de qualquer livro publicado sobreviver.
+Gêneros com poucos livros por faixa (hoje Ficção literária, Infantil e
+Não ficção, que só existem na tabela manual) ficam fora do gráfico, mas
+continuam no CSV.
 
 ---
 
