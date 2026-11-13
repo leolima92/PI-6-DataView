@@ -1,6 +1,7 @@
 """
 Coleta diária completa: Open Library (coletar) + merge Google Books +
-consolidação do histórico + tratamento + títulos em pt + classificação dos perfis de popularidade.
+consolidação do histórico + tratamento + títulos em pt + classificação dos perfis de popularidade +
+curva de sobrevivência.
 
 Pensado para rodar agendado, 1x por dia. Ver scripts/run_daily.ps1 e o
 README para registrar no Agendador de Tarefas do Windows.
@@ -23,6 +24,7 @@ from consolidar_historico import main as consolidar_historico
 from tratar import main as tratar_dados
 from traduzir_titulos import main as traduzir_titulos
 from analise_perfis import main as analisar_perfis
+from analise_sobrevivencia import main as curva_sobrevivencia
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ def main() -> int:
         tratar_dados()
         traduzir_titulos()
         analisar_perfis()
+        curva_sobrevivencia()
     except Exception:
         logger.exception("ERRO na coleta diária")
         return 1
