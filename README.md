@@ -96,8 +96,10 @@ PI-6-DataView/
 │       ├── tratar.py             #   4. base tratada para análise
 │       ├── traduzir_titulos.py   #   5. títulos em português
 │       ├── perfis.py             #   6. perfis de popularidade
-│       └── sobrevivencia.py      #   7. curva de sobrevivência
+│       ├── sobrevivencia.py      #   7. curva de sobrevivência
+│       └── exportar_livro.py     #   dados do livro (livro/dados.js), à mão
 ├── dados/correcoes_livros.csv    # correções manuais (versionadas)
+├── livro/                        # o livro: index.html + dados.js
 ├── docs/                         # imagens do README
 └── scripts/
     ├── run_daily.ps1             # wrapper do Agendador de Tarefas do Windows
@@ -355,6 +357,33 @@ lidos com o tempo, não a chance de qualquer livro publicado sobreviver.
 Gêneros com poucos livros por faixa (hoje Ficção literária, Infantil e
 Não ficção, que só existem na tabela manual) ficam fora do gráfico, mas
 continuam no CSV.
+
+---
+
+## O livro (`livro/`)
+
+Os resultados são apresentados como um livro: *Livros que desafiam o
+tempo* (issue #17). É uma página só (`livro/index.html`, HTML + CSS + JS,
+sem dependências além das fontes do Google), com duas páginas lado a lado
+e virada de página.
+
+- **Apresentar:** abra `livro/index.html` no navegador. Seta para a
+  direita, espaço ou o passador de slides avança (nos gráficos, revela um
+  passo de cada vez); seta para a esquerda volta; `Home` e `End` vão para
+  a capa e para o fim. Clicar na metade direita ou esquerda faz o mesmo.
+- **Ler depois:** o sumário tem links, e as notas de rodapé e o apêndice
+  trazem as métricas e definições. Cada abertura tem um endereço
+  (`#cap3`, `#apendice`...).
+- **Atualizar os dados:** depois da rotina diária, rode
+  `python -m booktrends.etapas.exportar_livro`. Ela gera `livro/dados.js`
+  a partir de `perfis_livros.csv`, `livros_analise.csv` e
+  `sobrevivencia.csv`; faça commit do arquivo para publicar a versão nova.
+- **Link público:** em *Settings → Pages* do GitHub, publique a branch
+  `main`; o livro fica em `https://leolima92.github.io/PI-6-DataView/livro/`.
+
+Hoje o livro tem capa, sumário, o capítulo III (os quatro destinos), o
+apêndice, as notas e o colofão. Os outros capítulos estão no sumário como
+"em preparação".
 
 ---
 
