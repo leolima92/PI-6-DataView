@@ -9,3 +9,6 @@ logs/
 
 # Claude Code worktrees / local state
 .claude/
+
+# Dados processados gerados pelo pipeline
+/processed/
