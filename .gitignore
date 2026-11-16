@@ -12,3 +12,6 @@ logs/
 
 # Dados processados gerados pelo pipeline
 /processed/
+
+# Gráficos HTML gerados pela análise
+/analise/graficos/*.html
