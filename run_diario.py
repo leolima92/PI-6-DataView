@@ -34,6 +34,7 @@ def main() -> int:
     inicio = dt.datetime.now()
     logger.info("=== Coleta diária iniciada em %s ===", f"{inicio:%Y-%m-%d %H:%M:%S}")
     logger.info("Log desta execução: %s", arquivo_log)
+    logger.info("Python: %s (%s)", sys.executable, sys.version.split()[0])
 
     try:
         coletar()

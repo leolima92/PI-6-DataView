@@ -22,6 +22,7 @@ livro publicado sobreviver.
 """
 
 import logging
+import sys
 
 import pandas as pd
 
@@ -160,7 +161,15 @@ def main():
     perfis = pd.read_csv(entrada, encoding="utf-8-sig", low_memory=False)
     tabela = calcular(perfis, LIMIAR_VIVO)
     salvar_csv(tabela, BASE_DIR / "processed" / "sobrevivencia.csv")
-    desenhar(tabela, BASE_DIR / "analise" / "graficos" / "sobrevivencia_por_genero.png")
+    try:
+        desenhar(tabela, BASE_DIR / "analise" / "graficos" / "sobrevivencia_por_genero.png")
+    except ImportError as erro:
+        # o gráfico é um extra: sem matplotlib, a tabela já foi salva e a rotina segue
+        logger.warning(
+            "Gráfico da curva não foi gerado (%s). Instale as dependências neste Python: "
+            "\"%s\" -m pip install -r requirements.txt",
+            erro, sys.executable,
+        )
 
     resumo = tabela[tabela["exibir"]].groupby("genero")["pct_vivos"].agg(["first", "last", "mean"])
     resumo.columns = ["mais_novos", "mais_velhos", "media"]
